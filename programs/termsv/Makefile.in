@@ -3,4 +3,20 @@ APPMODE   = -mconsole -municode
 IMPORTS   = advapi32
 
 C_SRCS = \
-	main.c
+	main.c \
+	funcs.c  \
+	lang.c  \
+	xrdp_bitmap.c  \
+	xrdp.c  \
+	xrdp_cache.c  \
+	xrdp_encoder.c  \
+	xrdp_font.c  \
+	xrdp_listen.c  \
+	xrdp_login_wnd.c  \
+	xrdp_mm.c  \
+	xrdp_painter.c  \
+	xrdp_process.c  \
+	xrdp_region.c  \
+	xrdpwin.c  \
+	xrdp_wm.c
+

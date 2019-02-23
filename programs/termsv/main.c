@@ -23,7 +23,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(termsv);
-
+#if 0
 static WCHAR termserviceW[] = {'T','e','r','m','S','e','r','v','i','c','e',0};
 
 static SERVICE_STATUS_HANDLE service_handle;
@@ -98,3 +98,87 @@ int wmain( int argc, WCHAR *argv[] )
     StartServiceCtrlDispatcherW( service_table );
     return 0;
 }
+#endif
+
+/*****************************************************************************/
+long
+g_load_library(char *in)
+{
+    return (long)LoadLibraryA(in);
+}
+
+/*****************************************************************************/
+int
+g_free_library(long lib)
+{
+    if (lib == 0)
+    {
+        return 0;
+    }
+
+    return FreeLibrary((HMODULE)lib);
+}
+
+/*****************************************************************************/
+/* returns NULL if not found */
+void *
+g_get_proc_address(long lib, const char *name)
+{
+    if (lib == 0)
+    {
+        return 0;
+    }
+
+    return GetProcAddress((HMODULE)lib, name);
+}
+
+int
+tc_thread_create(unsigned long (__stdcall *start_routine)(void *), void *arg)
+{
+    int rv = 0;
+    DWORD thread_id = 0;
+    HANDLE thread = (HANDLE)0;
+
+    /* CreateThread returns handle or zero on error */
+    thread = CreateThread(0, 0, start_routine, arg, 0, &thread_id);
+    rv = !thread;
+    CloseHandle(thread);
+    return rv;
+}
+
+typedef signed __int64 intptr_t;
+typedef intptr_t tbus;
+
+/*****************************************************************************/
+tbus
+tc_sem_create(int init_count)
+{
+    HANDLE sem;
+
+    sem = CreateSemaphoreW(0, init_count, init_count + 10, 0);
+    return (tbus)sem;
+}
+
+/*****************************************************************************/
+void
+tc_sem_delete(tbus sem)
+{
+    CloseHandle((HANDLE)sem);
+}
+
+/*****************************************************************************/
+int
+tc_sem_dec(tbus sem)
+{
+    WaitForSingleObject((HANDLE)sem, INFINITE);
+    return 0;
+}
+
+/*****************************************************************************/
+int
+tc_sem_inc(tbus sem)
+{
+    ReleaseSemaphore((HANDLE)sem, 1, 0);
+    return 0;
+}
+
