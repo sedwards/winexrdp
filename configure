@@ -1584,6 +1584,7 @@ enable_windowscodecs
 enable_windowscodecsext
 enable_winealsa_drv
 enable_wineandroid_drv
+enable_winerdp_drv
 enable_winebus_sys
 enable_winecoreaudio_drv
 enable_winecrt0
@@ -1734,6 +1735,7 @@ enable_systeminfo
 enable_taskkill
 enable_tasklist
 enable_taskmgr
+enable_rdpshadow
 enable_termsv
 enable_uninstaller
 enable_unlodctr
@@ -20053,6 +20055,7 @@ wine_fn_config_makefile dlls/windowscodecsext enable_windowscodecsext
 wine_fn_config_makefile dlls/windowscodecsext/tests enable_tests
 wine_fn_config_makefile dlls/winealsa.drv enable_winealsa_drv
 wine_fn_config_makefile dlls/wineandroid.drv enable_wineandroid_drv
+wine_fn_config_makefile dlls/winerdp.drv enable_winerdp_drv
 wine_fn_config_makefile dlls/winebus.sys enable_winebus_sys
 wine_fn_config_makefile dlls/winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_makefile dlls/winecrt0 enable_winecrt0
@@ -20236,6 +20239,7 @@ wine_fn_config_makefile programs/taskkill enable_taskkill
 wine_fn_config_makefile programs/tasklist enable_tasklist
 wine_fn_config_makefile programs/taskmgr enable_taskmgr
 wine_fn_config_makefile programs/termsv enable_termsv
+wine_fn_config_makefile programs/rdpshadow enable_rdpshadow
 wine_fn_config_makefile programs/uninstaller enable_uninstaller
 wine_fn_config_makefile programs/unlodctr enable_unlodctr
 wine_fn_config_makefile programs/view enable_view

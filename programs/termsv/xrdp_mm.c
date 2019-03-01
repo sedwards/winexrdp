@@ -49,6 +49,13 @@
   } \
   while (0)
 
+#include <string.h>
+//#define g_strcasecmp strcasecmp
+//
+//#include "libxrdp_oscalls.h"
+//#include "libxrdp_list.h"
+//#include "libxrdp_ssl_calls.h"
+
 /*****************************************************************************/
 struct xrdp_mm *
 xrdp_mm_create(struct xrdp_wm *owner)

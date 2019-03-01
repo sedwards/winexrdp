@@ -1,0 +1,6 @@
+MODULE    = shm-test-client1.exe
+APPMODE   = -mconsole
+IMPORTS   = kernel32 user32 
+
+C_SRCS = \
+	shm-test-client1.c

@@ -34,7 +34,7 @@
 
 #include "xrdp.h"
 
-static const WCHAR xrdpW[] = {'x','r','d','p','d',0};
+//static const WCHAR xrdpW[] = {'x','r','d','p','d',0};
 
 #if 0
 

@@ -672,7 +672,7 @@ xrdp_login_wnd_create(struct xrdp_wm *self)
 
         regular = 0;
     }
-
+#if 0  // sedwards disabled
     /* multimon scenario, draw login window on primary monitor */
     if (self->client_info->monitorCount > 1)
     {
@@ -691,6 +691,7 @@ xrdp_login_wnd_create(struct xrdp_wm *self)
             }
         }
     }
+#endif
 
     /* draw login window */
     self->login_window = xrdp_bitmap_create(log_width, log_height, self->screen->bpp,

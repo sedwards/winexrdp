@@ -18,16 +18,18 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#include <windows.h>
+#include <windef.h>
+#include <winbase.h>
+#include <winnt.h>
 #include <winsvc.h>
-#include "wine/debug.h"
+#include <wine/debug.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(termsv);
-#if 0
 static WCHAR termserviceW[] = {'T','e','r','m','S','e','r','v','i','c','e',0};
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
+BOOL TERMSV_Initialize(void);
 
 static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_data, LPVOID context )
 {
@@ -64,6 +66,8 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 
     WINE_TRACE( "starting service\n" );
 
+    //if (!TERMSV_Initialize()) return;
+
     stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
 
     service_handle = RegisterServiceCtrlHandlerExW( termserviceW, service_handler, NULL );
@@ -87,7 +91,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     WINE_TRACE( "service stopped\n" );
 }
 
-int wmain( int argc, WCHAR *argv[] )
+int twmain( int argc, WCHAR *argv[] )
 {
     static const SERVICE_TABLE_ENTRYW service_table[] =
     {
@@ -98,7 +102,6 @@ int wmain( int argc, WCHAR *argv[] )
     StartServiceCtrlDispatcherW( service_table );
     return 0;
 }
-#endif
 
 /*****************************************************************************/
 long

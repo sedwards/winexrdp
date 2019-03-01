@@ -31,6 +31,8 @@
 
 #define THREAD_WAITING 100
 
+typedef short BOOL;
+
 static struct xrdp_listen *g_listen = 0;
 static long g_threadid = 0; /* main threadid */
 
@@ -367,9 +369,10 @@ typedef unsigned short  WCHAR,      *PWCHAR;
 
 
 /*****************************************************************************/
-int
-main(int argc, char **argv)
-//int wmain(int argc, WCHAR *argv[])
+//int
+//main(int argc, char **argv)
+int wmain(int argc, WCHAR *argv[])
+//BOOL TERMSV_Initialize(void)
 {
     int exit_status = 0;
     int test;
@@ -385,16 +388,16 @@ main(int argc, char **argv)
     g_init("xrdp");
     ssl_init();
 
-    for (test = 0; test < argc; test++)
-    {
-        DEBUG(("Argument %i - %s", test, argv[test]));
-    }
+ //   for (test = 0; test < argc; test++)
+ //   {
+ //       DEBUG(("Argument %i - %s", test, argv[test]));
+ //   }
 
     g_snprintf(cfg_file, 255, "%s/xrdp.ini", XRDP_CFG_PATH);
 
     startup_params = (struct xrdp_startup_params *)
                      g_malloc(sizeof(struct xrdp_startup_params), 1);
-
+#if 0
     if (xrdp_process_params(argc, argv, startup_params) != 0)
     {
         g_writeln("Unknown Parameter");
@@ -403,7 +406,7 @@ main(int argc, char **argv)
         g_deinit();
         g_exit(0);
     }
-
+#endif
     g_snprintf(pid_file, 255, "%s/xrdp.pid", XRDP_PID_PATH);
     no_daemon = 0;
 
@@ -502,7 +505,7 @@ main(int argc, char **argv)
     }
 
 
-
+#if 0 // sedwards - disabled for rdpservices
     if (g_file_exist(pid_file)) /* xrdp.pid */
     {
         g_writeln("It looks like xrdp is already running.");
@@ -611,7 +614,8 @@ main(int argc, char **argv)
 
         /* end of daemonizing code */
     }
-
+#endif
+// sedwards
     g_threadid = tc_get_threadid();
     g_listen = xrdp_listen_create();
     g_signal_user_interrupt(xrdp_shutdown); /* SIGINT */
