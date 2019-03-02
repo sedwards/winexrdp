@@ -723,7 +723,7 @@ static void android_surface_set_region( struct window_surface *window_surface, H
     struct android_window_surface *surface = get_android_surface( window_surface );
 
     TRACE( "updating surface %p hwnd %p with %p\n", surface, surface->hwnd, region );
-
+#if 0
     window_surface->funcs->lock( window_surface );
     if (!region)
     {
