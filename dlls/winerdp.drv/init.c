@@ -37,7 +37,7 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(android);
+WINE_DEFAULT_DEBUG_CHANNEL(rdp);
 
 extern MONITORINFOEXW default_monitor DECLSPEC_HIDDEN;
 
@@ -109,7 +109,7 @@ void set_screen_dpi( DWORD dpi )
 static void fetch_display_metrics(void)
 {
 //    if (wine_get_java_vm()) return;  /* for Java threads it will be set when the top view is created */
-
+    FIXME("fetch_display_metrics\n");
     SERVER_START_REQ( get_window_rectangles )
     {
         req->handle = wine_server_user_handle( GetDesktopWindow() );
@@ -123,7 +123,7 @@ static void fetch_display_metrics(void)
     SERVER_END_REQ;
 
     init_monitors( screen_width, screen_height );
-    TRACE( "screen %ux%u\n", screen_width, screen_height );
+    FIXME( "fetch_display_metrics - screen %ux%u\n", screen_width, screen_height );
 }
 
 
@@ -136,6 +136,7 @@ static void device_init(void)
 {
     device_init_done = TRUE;
     fetch_display_metrics();
+    FIXME("device_init\n");
 }
 
 
@@ -144,9 +145,14 @@ static void device_init(void)
  */
 static RDP_PDEVICE *create_android_physdev(void)
 {
+	FIXME("create_android_physdev\n");
     RDP_PDEVICE *physdev;
 
-    if (!device_init_done) device_init();
+    if (!device_init_done) 
+    {
+	FIXME("create_android_physdev no device_init_done\n");
+	    device_init();
+    }
 
     if (!(physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) ))) return NULL;
     return physdev;
@@ -158,11 +164,15 @@ static RDP_PDEVICE *create_android_physdev(void)
 static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
                               LPCWSTR output, const DEVMODEW* initData )
 {
+	FIXME("RDP_CreateDC\n");
     RDP_PDEVICE *physdev = create_android_physdev();
 
-    if (!physdev) return FALSE;
+    if (!physdev){
+	FIXME("RDP_CreateDC - failed\n");
+	    return FALSE;
+    }
 
-    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
+    //push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
     return TRUE;
 }
 
@@ -172,11 +182,15 @@ static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
  */
 static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
+	FIXME("RDP_CreateCompatibleDC\n");
     RDP_PDEVICE *physdev = create_android_physdev();
 
-    if (!physdev) return FALSE;
+    if (!physdev){ 
+	FIXME("RDP_CreateCompatibleDC - failed\n");
+	    return FALSE;
+    }
 
-    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
+    //push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
     return TRUE;
 }
 
@@ -186,6 +200,7 @@ static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
  */
 static BOOL RDP_DeleteDC( PHYSDEV dev )
 {
+	FIXME("RDP_DeleteDC\n");
     HeapFree( GetProcessHeap(), 0, dev );
     return TRUE;
 }
@@ -207,8 +222,10 @@ LONG CDECL RDP_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
  */
 BOOL CDECL RDP_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
 {
+	FIXME("RDP_GetMonitorInfo\n");
     if (handle != (HMONITOR)1)
     {
+	FIXME("RDP_GetMonitorInfo - Error\n");
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
@@ -226,6 +243,7 @@ BOOL CDECL RDP_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
  */
 BOOL CDECL RDP_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
+	FIXME("RDP_EnumDisplayMonitors\n");
     return proc( (HMONITOR)1, 0, &default_monitor.rcMonitor, lp );
 }
 
@@ -235,6 +253,7 @@ BOOL CDECL RDP_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, 
  */
 BOOL CDECL RDP_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
+	FIXME("RDP_EnumDisplaySettingsEx\n");
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','A','n','d','r','o','i','d',' ','d','r','i','v','e','r',0 };
 
@@ -273,6 +292,7 @@ BOOL CDECL RDP_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode,
  */
 static struct opengl_funcs * RDP_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
+#if 0
     struct opengl_funcs *ret;
 
     if (!(ret = get_wgl_driver( version )))
@@ -281,6 +301,7 @@ static struct opengl_funcs * RDP_wine_get_wgl_driver( PHYSDEV dev, UINT version 
         ret = dev->funcs->wine_get_wgl_driver( dev, version );
     }
     return ret;
+#endif
 }
 
 
@@ -412,7 +433,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    //RDP_wine_get_wgl_driver,        /* wine_get_wgl_driver */
     NULL,                               /* wine_get_wgl_driver */
     NULL,                               /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */
@@ -464,148 +484,17 @@ static unsigned int hash_symbol( const char *name )
 
 static void *find_symbol( const struct dl_phdr_info* info, const char *var, int type )
 {
-    const ElfW(Dyn) *dyn = NULL;
-    const ElfW(Phdr) *ph;
-    const ElfW(Sym) *symtab = NULL;
-    const Elf32_Word *hashtab = NULL;
-    const Elf32_Word *gnu_hashtab = NULL;
-    const char *strings = NULL;
-    Elf32_Word idx;
-
-    for (ph = info->dlpi_phdr; ph < &info->dlpi_phdr[info->dlpi_phnum]; ++ph)
-    {
-        if (PT_DYNAMIC == ph->p_type)
-        {
-            dyn = (const ElfW(Dyn) *)(info->dlpi_addr + ph->p_vaddr);
-            break;
-        }
-    }
-    if (!dyn) return NULL;
-
-    while (dyn->d_tag)
-    {
-        if (dyn->d_tag == DT_STRTAB)
-            strings = (const char*)(info->dlpi_addr + dyn->d_un.d_ptr);
-        if (dyn->d_tag == DT_SYMTAB)
-            symtab = (const ElfW(Sym) *)(info->dlpi_addr + dyn->d_un.d_ptr);
-        if (dyn->d_tag == DT_HASH)
-            hashtab = (const Elf32_Word *)(info->dlpi_addr + dyn->d_un.d_ptr);
-        if (dyn->d_tag == DT_GNU_HASH)
-            gnu_hashtab = (const Elf32_Word *)(info->dlpi_addr + dyn->d_un.d_ptr);
-        dyn++;
-    }
-
-    if (!symtab || !strings) return NULL;
-
-    if (gnu_hashtab)  /* new style hash table */
-    {
-        const unsigned int hash   = gnu_hash(var);
-        const Elf32_Word nbuckets = gnu_hashtab[0];
-        const Elf32_Word symbias  = gnu_hashtab[1];
-        const Elf32_Word nwords   = gnu_hashtab[2];
-        const ElfW(Addr) *bitmask = (const ElfW(Addr) *)(gnu_hashtab + 4);
-        const Elf32_Word *buckets = (const Elf32_Word *)(bitmask + nwords);
-        const Elf32_Word *chains  = buckets + nbuckets - symbias;
-
-        if (!(idx = buckets[hash % nbuckets])) return NULL;
-        do
-        {
-            if ((chains[idx] & ~1u) == (hash & ~1u) &&
-                ELF32_ST_BIND(symtab[idx].st_info) == STB_GLOBAL &&
-                ELF32_ST_TYPE(symtab[idx].st_info) == type &&
-                !strcmp( strings + symtab[idx].st_name, var ))
-                return (void *)(info->dlpi_addr + symtab[idx].st_value);
-        } while (!(chains[idx++] & 1u));
-    }
-    else if (hashtab)  /* old style hash table */
-    {
-        const unsigned int hash   = hash_symbol( var );
-        const Elf32_Word nbuckets = hashtab[0];
-        const Elf32_Word *buckets = hashtab + 2;
-        const Elf32_Word *chains  = buckets + nbuckets;
-
-        for (idx = buckets[hash % nbuckets]; idx; idx = chains[idx])
-        {
-            if (ELF32_ST_BIND(symtab[idx].st_info) == STB_GLOBAL &&
-                ELF32_ST_TYPE(symtab[idx].st_info) == type &&
-                !strcmp( strings + symtab[idx].st_name, var ))
-                return (void *)(info->dlpi_addr + symtab[idx].st_value);
-        }
-    }
-    return NULL;
 }
 
-#if 0
 static int enum_libs( struct dl_phdr_info* info, size_t size, void* data )
 {
-    const char *p;
-
-    if (!info->dlpi_name) return 0;
-    if (!(p = strrchr( info->dlpi_name, '/' ))) return 0;
-    if (strcmp( p, "/libhardware.so" )) return 0;
-    TRACE( "found libhardware at %p\n", info->dlpi_phdr );
-    phw_get_module = find_symbol( info, "hw_get_module", STT_FUNC );
-    return 1;
 }
 static void load_hardware_libs(void)
 {
-    const struct hw_module_t *module;
-    int ret;
-    void *libhardware;
-    char error[256];
-#if 0
-    if ((libhardware = wine_dlopen( "libhardware.so", RTLD_GLOBAL, error, sizeof(error) )))
-    {
-        LOAD_FUNCPTR( libhardware, hw_get_module );
-    }
-    else
-    {
-        /* Android >= N disallows loading libhardware, so we load libandroid (which imports
-         * libhardware), and then we can find libhardware in the list of loaded libraries.
-         */
-        if (!wine_dlopen( "libandroid.so", RTLD_GLOBAL, error, sizeof(error) ))
-        {
-            ERR( "failed to load libandroid.so: %s\n", error );
-            return;
-        }
-        dl_iterate_phdr( enum_libs, 0 );
-        if (!phw_get_module)
-        {
-            ERR( "failed to find hw_get_module\n" );
-            return;
-        }
-    }
-
-    if ((ret = phw_get_module( GRALLOC_HARDWARE_MODULE_ID, &module )))
-    {
-        ERR( "failed to load gralloc module err %d\n", ret );
-        return;
-    }
-
-    init_gralloc( module );
-#endif
 }
 
 static void load_android_libs(void)
 {
-#if 0
-    void *libandroid, *liblog;
-    char error[1024];
-
-    if (!(libandroid = wine_dlopen( "libandroid.so", RTLD_GLOBAL, error, sizeof(error) )))
-    {
-        ERR( "failed to load libandroid.so: %s\n", error );
-        return;
-    }
-    if (!(liblog = wine_dlopen( "liblog.so", RTLD_GLOBAL, error, sizeof(error) )))
-    {
-        ERR( "failed to load liblog.so: %s\n", error );
-        return;
-    }
-    LOAD_FUNCPTR( liblog, __android_log_print );
-    LOAD_FUNCPTR( libandroid, ANativeWindow_fromSurface );
-    LOAD_FUNCPTR( libandroid, ANativeWindow_release );
-#endif
 }
 
 #undef DECL_FUNCPTR
@@ -613,29 +502,6 @@ static void load_android_libs(void)
 
 static BOOL process_attach(void)
 {
-#if 0
-    jclass class;
-    jobject object = wine_get_java_object();
-    JNIEnv *jni_env;
-    JavaVM *java_vm;
-
-    load_hardware_libs();
-
-    if ((java_vm = wine_get_java_vm()))  /* running under Java */
-    {
-#ifdef __i386__
-        WORD old_fs = wine_get_fs();
-#endif
-        load_android_libs();
-        (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
-        class = (*jni_env)->GetObjectClass( jni_env, object );
-        (*jni_env)->RegisterNatives( jni_env, class, methods, ARRAY_SIZE( methods ));
-        (*jni_env)->DeleteLocalRef( jni_env, class );
-#ifdef __i386__
-        wine_set_fs( old_fs );  /* the Java VM hijacks %fs for its own purposes, restore it */
-#endif
-    }
-#endif
     return TRUE;
 }
 
@@ -653,4 +519,3 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
-#endif

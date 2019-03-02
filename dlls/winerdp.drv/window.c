@@ -47,7 +47,7 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(android);
+//WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 #if 0
 /* private window data */

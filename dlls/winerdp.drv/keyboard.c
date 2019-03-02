@@ -36,8 +36,8 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
-WINE_DECLARE_DEBUG_CHANNEL(key);
+//WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
+//WINE_DECLARE_DEBUG_CHANNEL(key);
 
 #if 0
 static const UINT keycode_to_vkey[] =
