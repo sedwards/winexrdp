@@ -24,10 +24,6 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
-//#include <jni.h>
-//#include <android/log.h>
-//#include <android/input.h>
-//#include <android/native_window_jni.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -36,25 +32,13 @@
 #include "wine/gdi_driver.h"
 #include "rdp_native.h"
 
-
-/**************************************************************************
- * Android interface
- */
-#if 0
-#define DECL_FUNCPTR(f) extern typeof(f) * p##f DECLSPEC_HIDDEN
-DECL_FUNCPTR( __android_log_print );
-DECL_FUNCPTR( HANDLE_fromSurface );
-DECL_FUNCPTR( HANDLE_release );
-#undef DECL_FUNCPTR
-#endif
-
 /**************************************************************************
  * OpenGL driver
  */
 
-extern void update_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
-extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
-extern struct opengl_funcs *get_wgl_driver( UINT version ) DECLSPEC_HIDDEN;
+//extern void update_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
+//extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
+//extern struct opengl_funcs *get_wgl_driver( UINT version ) DECLSPEC_HIDDEN;
 
 
 /**************************************************************************
@@ -154,8 +138,5 @@ union event_data
 };
 
 int send_event( const union event_data *data ) DECLSPEC_HIDDEN;
-
-extern void *wine_get_java_vm(void);
-extern PVOID wine_get_java_object(void);
 
 #endif  /* __WINE_ANDROID_H */

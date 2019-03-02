@@ -47,9 +47,8 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
-//WINE_DEFAULT_DEBUG_CHANNEL(android);
+WINE_DEFAULT_DEBUG_CHANNEL(android);
 
-#if 0
 /* private window data */
 struct android_win_data
 {
@@ -58,7 +57,7 @@ struct android_win_data
     RECT           window_rect;    /* USER window rectangle relative to parent */
     RECT           whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT           client_rect;    /* client area relative to parent */
-    ANativeWindow *window;         /* native window wrapper that forwards calls to the desktop process */
+    PVOID *window;         /* native window wrapper that forwards calls to the desktop process */
     struct window_surface *surface;
 };
 
@@ -123,6 +122,7 @@ static UINT get_win_monitor_dpi( HWND hwnd )
  */
 static struct android_win_data *alloc_win_data( HWND hwnd )
 {
+#if 0
     struct android_win_data *data;
 
     if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
@@ -134,6 +134,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
         win_data_context[context_idx(hwnd)] = data;
     }
     return data;
+#endif
 }
 
 
@@ -142,10 +143,12 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
  */
 static void free_win_data( struct android_win_data *data )
 {
+#if 0
     win_data_context[context_idx( data->hwnd )] = NULL;
     LeaveCriticalSection( &win_data_section );
     if (data->window) release_ioctl_window( data->window );
     HeapFree( GetProcessHeap(), 0, data );
+#endif
 }
 
 
@@ -156,12 +159,14 @@ static void free_win_data( struct android_win_data *data )
  */
 static struct android_win_data *get_win_data( HWND hwnd )
 {
+#if 0
     struct android_win_data *data;
 
     if (!hwnd) return NULL;
     EnterCriticalSection( &win_data_section );
     if ((data = win_data_context[context_idx(hwnd)]) && data->hwnd == hwnd) return data;
     LeaveCriticalSection( &win_data_section );
+#endif
     return NULL;
 }
 
@@ -191,16 +196,16 @@ static struct ANativeWindow *get_ioctl_window( HWND hwnd )
     return ret;
 }
 
-
+typedef struct java_event java_event;
 /* Handling of events coming from the Java side */
 
 struct java_event
 {
-    struct list      entry;
-    union event_data data;
+    struct list *entry;
+    union event_data *data;
 };
 
-static struct list event_queue = LIST_INIT( event_queue );
+//static struct list event_queue = LIST_INIT( event_queue );
 static struct java_event *current_event;
 static int event_pipe[2];
 static DWORD desktop_tid;
@@ -208,13 +213,14 @@ static DWORD desktop_tid;
 /***********************************************************************
  *           send_event
  */
-int send_event( const union event_data *data )
+//int send_event( const union event_data *data )
+int send_event( const PLONG *data )
 {
     int res;
 
     if ((res = write( event_pipe[1], data, sizeof(*data) )) != sizeof(*data))
     {
-        p__android_log_print( ANDROID_LOG_ERROR, "wine", "failed to send event" );
+  //      p__android_log_print( ANDROID_LOG_ERROR, "wine", "failed to send event" );
         return -1;
     }
     return 0;
@@ -225,16 +231,18 @@ int send_event( const union event_data *data )
  *
  * JNI callback, runs in the context of the Java thread.
  */
-void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height )
+void desktop_changed( PVOID *env, PVOID obj, int width, int height )
 {
+#if 0
     union event_data data;
 
     memset( &data, 0, sizeof(data) );
     data.type = DESKTOP_CHANGED;
     data.desktop.width = width;
     data.desktop.height = height;
-    p__android_log_print( ANDROID_LOG_INFO, "wine", "desktop_changed: %ux%u", width, height );
+//    p__android_log_print( ANDROID_LOG_INFO, "wine", "desktop_changed: %ux%u", width, height );
     send_event( &data );
+#endif
 }
 
 
@@ -243,15 +251,17 @@ void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height )
  *
  * JNI callback, runs in the context of the Java thread.
  */
-void config_changed( JNIEnv *env, jobject obj, jint dpi )
+//typedef union event_data int;
+void config_changed( PVOID *env, PVOID obj, int dpi )
 {
-    union event_data data;
 
-    memset( &data, 0, sizeof(data) );
-    data.type = CONFIG_CHANGED;
-    data.cfg.dpi = dpi;
-    p__android_log_print( ANDROID_LOG_INFO, "wine", "config_changed: %u dpi", dpi );
-    send_event( &data );
+ //   union event_data data;
+
+//    memset( &data, 0, sizeof(data) );
+//    data.type = CONFIG_CHANGED;
+//    data.cfg.dpi = dpi;
+//    p__android_log_print( ANDROID_LOG_INFO, "wine", "config_changed: %u dpi", dpi );
+//    send_event( &data );
 }
 
 
@@ -260,8 +270,9 @@ void config_changed( JNIEnv *env, jobject obj, jint dpi )
  *
  * JNI callback, runs in the context of the Java thread.
  */
-void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface, jboolean client )
+void surface_changed( PVOID *env, PVOID obj, int win, PVOID surface, BOOL client )
 {
+#if 0
     union event_data data;
 
     memset( &data, 0, sizeof(data) );
@@ -282,6 +293,7 @@ void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface, jbool
     }
     data.type = SURFACE_CHANGED;
     send_event( &data );
+#endif
 }
 
 
@@ -290,8 +302,9 @@ void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface, jbool
  *
  * JNI callback, runs in the context of the Java thread.
  */
-jboolean motion_event( JNIEnv *env, jobject obj, jint win, jint action, jint x, jint y, jint state, jint vscroll )
+BOOL motion_event( PVOID *env, PVOID obj, int win, int action, int x, int y, int state, int vscroll )
 {
+#if 0
     static LONG button_state;
     union event_data data;
     int prev_state;
@@ -359,6 +372,8 @@ jboolean motion_event( JNIEnv *env, jobject obj, jint win, jint action, jint x, 
     }
     send_event( &data );
     return JNI_TRUE;
+#endif
+    return 0;
 }
 
 /***********************************************************************
@@ -411,7 +426,7 @@ static void pull_events(void)
 
         res = read( event_pipe[0], &event->data, sizeof(event->data) );
         if (res != sizeof(event->data)) break;
-        list_add_tail( &event_queue, &event->entry );
+        //list_add_tail( &event_queue, &event->entry );
     }
     HeapFree( GetProcessHeap(), 0, event );
 }
@@ -422,6 +437,7 @@ static void pull_events(void)
  */
 static int process_events( DWORD mask )
 {
+#if 0
     DPI_AWARENESS_CONTEXT context;
     struct java_event *event, *next, *previous;
     unsigned int count = 0;
@@ -545,6 +561,7 @@ static int process_events( DWORD mask )
     }
     current_event = previous;
     return count;
+#endif
 }
 
 
@@ -574,9 +591,9 @@ static int wait_events( int timeout )
 
 struct android_window_surface
 {
-    struct window_surface header;
+    //struct window_surface header;
     HWND                  hwnd;
-    ANativeWindow        *window;
+    PVOID                *window;
     RECT                  bounds;
     BOOL                  byteswap;
     RGNDATA              *region_data;
@@ -595,8 +612,8 @@ static struct android_window_surface *get_android_surface( struct window_surface
 
 static inline void reset_bounds( RECT *bounds )
 {
-    bounds->left = bounds->top = INT_MAX;
-    bounds->right = bounds->bottom = INT_MIN;
+    //bounds->left = bounds->top = MAX;
+    //bounds->right = bounds->bottom = MIN;
 }
 
 static inline void add_bounds_rect( RECT *bounds, const RECT *rect )
@@ -699,7 +716,7 @@ static void android_surface_set_region( struct window_surface *window_surface, H
     struct android_window_surface *surface = get_android_surface( window_surface );
 
     TRACE( "updating surface %p hwnd %p with %p\n", surface, surface->hwnd, region );
-
+#if 0
     window_surface->funcs->lock( window_surface );
     if (!region)
     {
@@ -713,6 +730,7 @@ static void android_surface_set_region( struct window_surface *window_surface, H
     }
     window_surface->funcs->unlock( window_surface );
     set_surface_region( &surface->header, (HRGN)1 );
+#endif
 }
 
 /***********************************************************************
@@ -720,7 +738,8 @@ static void android_surface_set_region( struct window_surface *window_surface, H
  */
 static void android_surface_flush( struct window_surface *window_surface )
 {
-    struct android_window_surface *surface = get_android_surface( window_surface );
+#if 0
+    	struct android_window_surface *surface = get_android_surface( window_surface );
     ANativeWindow_Buffer buffer;
     ARect rc;
     RECT rect;
@@ -743,7 +762,6 @@ static void android_surface_flush( struct window_surface *window_surface )
     rc.top    = rect.top;
     rc.right  = rect.right;
     rc.bottom = rect.bottom;
-
     if (!surface->window->perform( surface->window, NATIVE_WINDOW_LOCK, &buffer, &rc ))
     {
         const RECT *rgn_rect = NULL, *end = NULL;
@@ -794,8 +812,9 @@ static void android_surface_flush( struct window_surface *window_surface )
         }
         surface->window->perform( surface->window, NATIVE_WINDOW_UNLOCK_AND_POST );
     }
-    else TRACE( "Unable to lock surface %p window %p buffer %p\n",
-                surface, surface->hwnd, surface->window );
+#endif
+    //TRACE( "Unable to lock surface %p window %p buffer %p\n",
+      //          surface, surface->hwnd, surface->window );
 }
 
 /***********************************************************************
@@ -803,6 +822,7 @@ static void android_surface_flush( struct window_surface *window_surface )
  */
 static void android_surface_destroy( struct window_surface *window_surface )
 {
+#if 0
     struct android_window_surface *surface = get_android_surface( window_surface );
 
     TRACE( "freeing %p bits %p\n", surface, surface->bits );
@@ -814,8 +834,10 @@ static void android_surface_destroy( struct window_surface *window_surface )
     release_ioctl_window( surface->window );
     HeapFree( GetProcessHeap(), 0, surface->bits );
     HeapFree( GetProcessHeap(), 0, surface );
+#endif
 }
 
+#if 0
 static const struct window_surface_funcs android_surface_funcs =
 {
     android_surface_lock,
@@ -826,11 +848,12 @@ static const struct window_surface_funcs android_surface_funcs =
     android_surface_flush,
     android_surface_destroy
 };
+#endif
 
 static BOOL is_argb_surface( struct window_surface *surface )
 {
-    return surface && surface->funcs == &android_surface_funcs &&
-        get_android_surface( surface )->info.bmiHeader.biCompression == BI_RGB;
+  //  return surface && surface->funcs == &android_surface_funcs &&
+  //      get_android_surface( surface )->info.bmiHeader.biCompression == BI_RGB;
 }
 /***********************************************************************
  *           set_color_key
@@ -856,6 +879,7 @@ static void set_color_key( struct android_window_surface *surface, COLORREF key 
  */
 static void set_surface_region( struct window_surface *window_surface, HRGN win_region )
 {
+#if 0
     struct android_window_surface *surface = get_android_surface( window_surface );
     struct android_win_data *win_data;
     HRGN region = win_region;
@@ -896,6 +920,8 @@ done:
     *window_surface->funcs->get_bounds( window_surface ) = surface->header.rect;
     window_surface->funcs->unlock( window_surface );
     if (region != win_region) DeleteObject( region );
+#endif
+    return;
 }
 
 /***********************************************************************
@@ -904,6 +930,7 @@ done:
 static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
                                               BYTE alpha, COLORREF color_key, BOOL src_alpha )
 {
+#if 0
     struct android_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
 
@@ -939,6 +966,8 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 
 failed:
     android_surface_destroy( &surface->header );
+#endif
+    FIXME("Create Surface\n");
     return NULL;
 }
 
@@ -947,6 +976,7 @@ failed:
  */
 static void set_surface_layered( struct window_surface *window_surface, BYTE alpha, COLORREF color_key )
 {
+#if 0
     struct android_window_surface *surface = get_android_surface( window_surface );
     COLORREF prev_key;
     BYTE prev_alpha;
@@ -961,6 +991,9 @@ static void set_surface_layered( struct window_surface *window_surface, BYTE alp
     if (alpha != prev_alpha || surface->color_key != prev_key)  /* refresh */
         *window_surface->funcs->get_bounds( window_surface ) = surface->header.rect;
     window_surface->funcs->unlock( window_surface );
+#endif
+    FIXME("set_surface_layered\n");
+    return;
 }
 
 /***********************************************************************
@@ -1219,7 +1252,7 @@ DWORD CDECL ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *hand
  */
 BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
 {
-    TRACE( "%p\n", hwnd );
+    FIXME( "ANDROID_CreateWindow %p\n", hwnd );
 
     if (hwnd == GetDesktopWindow())
     {
@@ -1245,7 +1278,7 @@ void CDECL ANDROID_DestroyWindow( HWND hwnd )
 
     if (data->surface) window_surface_release( data->surface );
     data->surface = NULL;
-    destroy_gl_drawable( hwnd );
+    //destroy_gl_drawable( hwnd );
     free_win_data( data );
 }
 
@@ -1258,6 +1291,7 @@ void CDECL ANDROID_DestroyWindow( HWND hwnd )
 static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_rect,
                                                  const RECT *client_rect )
 {
+	FIXME("android_win_data create_win_data\n");
     struct android_win_data *data;
     HWND parent;
 
@@ -1274,7 +1308,8 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
 
 static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-    if (!IntersectRect( surface_rect, visible_rect, &virtual_screen_rect )) return FALSE;
+	FIXME("get_surface_rect\n");
+  //  if (!IntersectRect( surface_rect, visible_rect, &virtual_screen_rect )) return FALSE;
     OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );
     surface_rect->left &= ~31;
     surface_rect->top  &= ~31;
@@ -1312,7 +1347,7 @@ void CDECL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_fla
     if (swp_flags & SWP_HIDEWINDOW) goto done;
     if (is_argb_surface( data->surface )) goto done;
     if (!get_surface_rect( visible_rect, &surface_rect )) goto done;
-
+#if 0
     if (data->surface)
     {
         if (!memcmp( &data->surface->rect, &surface_rect, sizeof(surface_rect) ))
@@ -1324,6 +1359,7 @@ void CDECL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_fla
             goto done;
         }
     }
+#endif
     if (!(swp_flags & SWP_SHOWWINDOW) && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) goto done;
 
     if (!layered || !GetLayeredWindowAttributes( hwnd, &key, &alpha, &flags )) flags = 0;
@@ -1511,6 +1547,8 @@ void CDECL ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
  */
 void CDECL ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
+	FIXME("ANDROID_SetLayeredWindowAttributes\n");
+#if 0
     struct android_win_data *data;
 
     if (!(flags & LWA_ALPHA)) alpha = 255;
@@ -1521,6 +1559,7 @@ void CDECL ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alp
         if (data->surface) set_surface_layered( data->surface, alpha, key );
         release_win_data( data );
     }
+#endif
 }
 
 
@@ -1530,6 +1569,7 @@ void CDECL ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alp
 BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
                                         const RECT *window_rect )
 {
+	FIXME("ANDROID_UpdateLayeredWindow\n");
     struct window_surface *surface;
     struct android_win_data *data;
     BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
@@ -1553,7 +1593,7 @@ BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO
         if (surface) window_surface_release( surface );
         surface = NULL;
     }
-
+#if 0
     if (!surface || !EqualRect( &surface->rect, &rect ))
     {
         data->surface = create_surface( data->hwnd, &rect, 255, color_key, TRUE );
@@ -1561,7 +1601,7 @@ BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO
         surface = data->surface;
     }
     else set_surface_layered( surface, 255, color_key );
-
+#endif
     if (surface) window_surface_add_ref( surface );
     release_win_data( data );
 
@@ -1572,14 +1612,14 @@ BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO
         return TRUE;
     }
 
-    dst_bits = surface->funcs->get_info( surface, bmi );
+//    dst_bits = surface->funcs->get_info( surface, bmi );
 
     if (!(dib = CreateDIBSection( info->hdcDst, bmi, DIB_RGB_COLORS, &src_bits, NULL, 0 ))) goto done;
     if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
 
     SelectObject( hdc, dib );
 
-    surface->funcs->lock( surface );
+ //   surface->funcs->lock( surface );
 
     if (info->prcDirty)
     {
@@ -1598,11 +1638,11 @@ BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO
     if (ret)
     {
         memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
-        add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
+    //    add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
     }
 
-    surface->funcs->unlock( surface );
-    surface->funcs->flush( surface );
+   // surface->funcs->unlock( surface );
+   // surface->funcs->flush( surface );
 
 done:
     window_surface_release( surface );
@@ -1616,6 +1656,7 @@ done:
  */
 LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
+	FIXME("ANDROID_WindowMessage\n");
     struct android_win_data *data;
 
     switch (msg)
@@ -1652,9 +1693,10 @@ LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
  */
 BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
 {
+	FIXME("ANDROID_create_desktop\n");
     desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
                                                        (LONG_PTR)desktop_wndproc_wrapper );
-
+#if 0
     /* wait until we receive the surface changed event */
     while (!screen_width)
     {
@@ -1665,6 +1707,7 @@ BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
         }
         process_events( QS_ALLINPUT );
     }
+#endif
     return TRUE;
 }
-#endif
+
