@@ -1,105 +1,127 @@
-#include <windows.h>
+#include <windows.h> 
 #include <stdio.h>
 //#include <conio.h>
 //#include <tchar.h>
 
-#define BUF_SIZE 4096
-#define BUFFER_SIZE 1024
-#define COPY_SIZE 1024
-#define BUF_SIZE2 4096 
+#define BUFSIZE 512
+ 
+int MyReadConsoleInput(VOID);
 
-//const WCHAR szName[]={'G','l','o','b','a','l','\\','M','y','F','i','l','e','M','a','p','p','i','n','g','O','b','j','e','c','t',0};
-const WCHAR pbData[BUF_SIZE2]={'2','e','s','s','a','g','e','f','r','o','m','f','i','r','s','t','p','r','o','c','e','s','s',0};
-char szName[]={"Global\\MyFileMappingObject"};
+int main(int argc, CHAR *argv[]) 
+{ 
+   HANDLE hPipe; 
+   LPSTR lpvMessage="Default message from client - 1."; 
+   CHAR  chBuf[BUFSIZE]; 
+   BOOL   fSuccess = FALSE; 
+   DWORD  cbRead, cbToWrite, cbWritten, dwMode; 
+   LPSTR lpszPipename = "\\\\.\\pipe\\mynamedpipe"; 
 
-static int mywprintf(const WCHAR *format, ...)
-{
-    static char output_bufA[65536];
-    static WCHAR output_bufW[sizeof(output_bufA)];
-    va_list             parms;
-    DWORD               nOut;
-    BOOL                res = FALSE;
-    HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    va_start(parms, format);
-    vsnprintfW(output_bufW, ARRAY_SIZE(output_bufW), format, parms);
-    va_end(parms);
-
-//    wprintf("output %S", *format);
-//    /* Try to write as unicode whenever we think it's a console */
-//    if (((DWORD_PTR)hout & 3) == 3)
-//    {
-//        res = WriteConsoleW(hout, output_bufW, strlenW(output_bufW), &nOut, NULL);
-//    }
-//    else
-//    {
-        DWORD   convertedChars;
-
-        /* Convert to OEM, then output */
-        convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, output_bufW, -1,
-                                             output_bufA, sizeof(output_bufA),
-                                             NULL, NULL);
-        printf("%s\n",output_bufA);
-//        res = WriteFile(hout, output_bufA, convertedChars, &nOut, FALSE);
-//    }
-
-    return res ? nOut : 0;
-}
-
-
-void MyCopyMemory(WCHAR *buf, WCHAR *pbData, SIZE_T cbData, SIZE_T bufsize)
-{
-    CopyMemory(buf, pbData, min(cbData,bufsize));
-}
-
-
-int main()
-{
-   HANDLE hMapFile;
-   LPCWSTR pBuf;
-
-   hMapFile = OpenFileMappingA(
-                   FILE_MAP_ALL_ACCESS,   // read/write access
-                   FALSE,                 // do not inherit the name
-                   szName);               // name of mapping object
-
-   if (hMapFile == NULL)
+   if( argc > 1 )
+      lpvMessage = argv[1];
+ 
+// Try to open a named pipe; wait for it, if necessary. 
+ 
+   while (1) 
+   { 
+      hPipe = CreateFileA( 
+         lpszPipename,   // pipe name 
+         GENERIC_READ |  // read and write access 
+         GENERIC_WRITE, 
+         0,              // no sharing 
+         NULL,           // default security attributes
+         OPEN_EXISTING,  // opens existing pipe 
+         0,              // default attributes 
+         NULL);          // no template file 
+ 
+   // Break if the pipe handle is valid. 
+ 
+      if (hPipe != INVALID_HANDLE_VALUE) 
+         break; 
+ 
+      // Exit if an error other than ERROR_PIPE_BUSY occurs. 
+ 
+      if (GetLastError() != ERROR_PIPE_BUSY) 
+      {
+         printf( ("Could not open pipe. GLE=%d\n"), GetLastError() ); 
+         return -1;
+      }
+ 
+      // All pipe instances are busy, so wait for 20 seconds. 
+ 
+      if ( ! WaitNamedPipeA(lpszPipename, 20000)) 
+      { 
+         printf("Could not open pipe: 20 second wait timed out."); 
+         return -1;
+      } 
+   } 
+ 
+// The pipe connected; change to message-read mode. 
+ 
+   dwMode = PIPE_READMODE_MESSAGE; 
+   fSuccess = SetNamedPipeHandleState( 
+      hPipe,    // pipe handle 
+      &dwMode,  // new pipe mode 
+      NULL,     // don't set maximum bytes 
+      NULL);    // don't set maximum time 
+   if ( ! fSuccess) 
    {
-      fprintf("Could not open file mapping object (%d).\n",
-             GetLastError());
-      return 1;
+      printf( ("SetNamedPipeHandleState failed. GLE=%d\n"), GetLastError() ); 
+      return -1;
    }
 
-   pBuf = (LPWSTR) MapViewOfFile(hMapFile, // handle to map object
-               FILE_MAP_ALL_ACCESS,  // read/write permission
-               0,
-               0,
-               BUF_SIZE);
+ for(;;) { 
+// Send a message to the pipe server. 
+ 
+   cbToWrite = (lstrlenA(lpvMessage)+1)*sizeof(CHAR);
+   printf( ("Sending %d byte message: \"%s\"\n"), cbToWrite, lpvMessage); 
 
-   if (pBuf == NULL)
+   fSuccess = WriteFile( 
+      hPipe,                  // pipe handle 
+      lpvMessage,             // message 
+      cbToWrite,              // message length 
+      &cbWritten,             // bytes written 
+      NULL);                  // not overlapped 
+
+   if ( ! fSuccess) 
    {
-      fprintf("Could not map view of file (%d).\n",
-             GetLastError());
-
-      CloseHandle(hMapFile);
-
-      return 1;
+      printf( ("WriteFile to pipe failed. GLE=%d\n"), GetLastError() ); 
+      return -1;
    }
 
-    for(;;) {
-      MessageBoxW(NULL, pBuf, L"Process2", MB_OK);
-      MyReadConsoleInput();
-      MyCopyMemory(pBuf, pbData, COPY_SIZE*sizeof(WCHAR), BUFFER_SIZE*sizeof(WCHAR));
-    }
+   printf("\nMessage sent to server, receiving reply as follows:\n");
+ 
+   do 
+   { 
+   // Read from the pipe. 
+ 
+      fSuccess = ReadFile( 
+         hPipe,    // pipe handle 
+         chBuf,    // buffer to receive reply 
+         BUFSIZE*sizeof(CHAR),  // size of buffer 
+         &cbRead,  // number of bytes read 
+         NULL);    // not overlapped 
+ 
+      if ( ! fSuccess && GetLastError() != ERROR_MORE_DATA )
+         break; 
+ 
+      printf( ("\"%s\"\n"), chBuf ); 
+   } while ( ! fSuccess);  // repeat loop if ERROR_MORE_DATA 
 
-   UnmapViewOfFile(pBuf);
+   if ( ! fSuccess)
+   {
+      printf( ("ReadFile from pipe failed. GLE=%d\n"), GetLastError() );
+      return -1;
+   }
+ }
 
-   CloseHandle(hMapFile);
-
-   return 0;
+   printf("\n<End of message, press ENTER to terminate connection and exit>");
+   //_getch();
+   MyReadConsoleInput();
+ 
+   CloseHandle(hPipe); 
+ 
+   return 0; 
 }
-
-
 
 HANDLE hStdin;
 DWORD fdwSaveOldMode;
@@ -197,9 +219,9 @@ VOID KeyEventProc(KEY_EVENT_RECORD ker)
 {
     printf("Key event: ");
 
-//    if(ker.bKeyDown)
+    if(ker.bKeyDown)
         printf("key pressed\n");
-//    else printf("key released\n");
+    else printf("key released\n");
 }
 
 VOID MouseEventProc(MOUSE_EVENT_RECORD mer)
@@ -249,4 +271,5 @@ VOID ResizeEventProc(WINDOW_BUFFER_SIZE_RECORD wbsr)
     printf("Resize event\n");
     printf("Console screen buffer is %d columns by %d rows.\n", wbsr.dwSize.X, wbsr.dwSize.Y);
 }
+
 

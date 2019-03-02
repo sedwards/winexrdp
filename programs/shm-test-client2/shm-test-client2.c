@@ -47,7 +47,6 @@ int main()
    HANDLE hMapFile;
    LPCWSTR pBuf;
 
-//   printf("Trying to OpenFileMapping");
    hMapFile = OpenFileMappingA(
                    FILE_MAP_ALL_ACCESS,   // read/write access
                    FALSE,                 // do not inherit the name
@@ -55,13 +54,11 @@ int main()
 
    if (hMapFile == NULL)
    {
-//	   printf("Error 1");
       fprintf("Could not open file mapping object (%d).\n",
              GetLastError());
       return 1;
    }
 
-//   printf("Trying MapViewOfFile");
    pBuf = (LPWSTR) MapViewOfFile(hMapFile, // handle to map object
                FILE_MAP_ALL_ACCESS,  // read/write permission
                0,
@@ -70,7 +67,6 @@ int main()
 
    if (pBuf == NULL)
    {
-//	   printf("Error 2");
       fprintf("Could not map view of file (%d).\n",
              GetLastError());
 
@@ -83,10 +79,6 @@ int main()
       MessageBoxW(NULL, pBuf, L"Process2", MB_OK);
       MyReadConsoleInput();
     }
-
-
-//   MessageBoxW(NULL, pBuf, L"Process2", MB_OK);
-//   mywprintf(pBuf);
 
    UnmapViewOfFile(pBuf);
 

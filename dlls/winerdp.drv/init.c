@@ -165,6 +165,7 @@ static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
                               LPCWSTR output, const DEVMODEW* initData )
 {
 	FIXME("RDP_CreateDC\n");
+#if 0
     RDP_PDEVICE *physdev = create_android_physdev();
 
     if (!physdev){
@@ -172,7 +173,8 @@ static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 	    return FALSE;
     }
 
-    //push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
+    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
+#endif
     return TRUE;
 }
 
@@ -183,6 +185,7 @@ static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
 	FIXME("RDP_CreateCompatibleDC\n");
+#if 0
     RDP_PDEVICE *physdev = create_android_physdev();
 
     if (!physdev){ 
@@ -190,7 +193,8 @@ static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 	    return FALSE;
     }
 
-    //push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
+    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
+#endif
     return TRUE;
 }
 
@@ -200,8 +204,8 @@ static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
  */
 static BOOL RDP_DeleteDC( PHYSDEV dev )
 {
-	FIXME("RDP_DeleteDC\n");
-    HeapFree( GetProcessHeap(), 0, dev );
+	//FIXME("RDP_DeleteDC\n");
+  //  HeapFree( GetProcessHeap(), 0, dev );
     return TRUE;
 }
 
@@ -286,24 +290,6 @@ BOOL CDECL RDP_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode,
     SetLastError( ERROR_NO_MORE_FILES );
     return FALSE;
 }
-
-/**********************************************************************
- *           RDP_wine_get_wgl_driver
- */
-static struct opengl_funcs * RDP_wine_get_wgl_driver( PHYSDEV dev, UINT version )
-{
-#if 0
-    struct opengl_funcs *ret;
-
-    if (!(ret = get_wgl_driver( version )))
-    {
-        dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
-        ret = dev->funcs->wine_get_wgl_driver( dev, version );
-    }
-    return ret;
-#endif
-}
-
 
 static const struct gdi_dc_funcs android_drv_funcs =
 {
@@ -451,54 +437,6 @@ const struct gdi_dc_funcs * CDECL RDP_get_gdi_driver( unsigned int version )
     }
     return &android_drv_funcs;
 }
-
-#define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
-#define LOAD_FUNCPTR(lib, func) do { \
-    if ((p##func = wine_dlsym( lib, #func, NULL, 0 )) == NULL) \
-        { ERR( "can't find symbol %s\n", #func); return; } \
-    } while(0)
-
-#ifndef DT_GNU_HASH
-#define DT_GNU_HASH 0x6ffffef5
-#endif
-
-static unsigned int gnu_hash( const char *name )
-{
-    unsigned int h = 5381;
-    while (*name) h = h * 33 + (unsigned char)*name++;
-    return h;
-}
-
-static unsigned int hash_symbol( const char *name )
-{
-    unsigned int hi, hash = 0;
-    while (*name)
-    {
-        hash = (hash << 4) + (unsigned char)*name++;
-        hi = hash & 0xf0000000;
-        hash ^= hi;
-        hash ^= hi >> 24;
-    }
-    return hash;
-}
-
-static void *find_symbol( const struct dl_phdr_info* info, const char *var, int type )
-{
-}
-
-static int enum_libs( struct dl_phdr_info* info, size_t size, void* data )
-{
-}
-static void load_hardware_libs(void)
-{
-}
-
-static void load_android_libs(void)
-{
-}
-
-#undef DECL_FUNCPTR
-#undef LOAD_FUNCPTR
 
 static BOOL process_attach(void)
 {

@@ -18,5 +18,7 @@ C_SRCS = \
 	xrdp_process.c  \
 	xrdp_region.c  \
 	xrdpwin.c  \
-	xrdp_wm.c
+	xrdp_wm.c \
+	pipe-srv.c \
+	os_calls.c
 

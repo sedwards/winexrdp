@@ -1,0 +1,6 @@
+MODULE    = pipe-client-2.exe
+APPMODE   = -mconsole
+IMPORTS   = kernel32 
+
+C_SRCS = \
+	pipe-client-2.c
