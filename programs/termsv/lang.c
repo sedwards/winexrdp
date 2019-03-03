@@ -24,7 +24,6 @@
 #endif
 
 #include "xrdp.h"
-#include "log.h"
 
 /* map for rdp to x11 scancodes
    code1 is regular scancode, code2 is extended scancode */

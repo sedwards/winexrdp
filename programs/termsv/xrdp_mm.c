@@ -22,8 +22,8 @@
 #include <config_ac.h>
 #endif
 #include "xrdp.h"
-#include "log.h"
 
+#if 0
 #ifndef USE_NOPAM
 #if defined(HAVE__PAM_TYPES_H)
 #define LINUXPAM 1
@@ -33,6 +33,7 @@
 #include <security/pam_constants.h>
 #endif
 #endif /* USE_NOPAM */
+#endif
 
 #include "xrdp_encoder.h"
 #include "xrdp_sockets.h"

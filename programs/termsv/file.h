@@ -21,8 +21,6 @@
 #if !defined(FILE_H)
 #define FILE_H
 
-#include "arch.h"
-
 int
 file_read_sections(int fd, struct list* names);
 int

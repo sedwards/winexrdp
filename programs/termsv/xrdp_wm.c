@@ -25,7 +25,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "xrdp.h"
-#include "log.h"
 
 /*****************************************************************************/
 struct xrdp_wm *
@@ -543,6 +542,8 @@ xrdp_wm_load_static_pointers(struct xrdp_wm *self)
     return 0;
 }
 
+int RdpCreateWindow(struct xrdp_wm *self);
+
 /*****************************************************************************/
 int
 xrdp_wm_init(struct xrdp_wm *self)
@@ -719,12 +720,15 @@ xrdp_wm_init(struct xrdp_wm *self)
     }
     else
     {
-        g_writeln("   xrdp_wm_init: no autologin / auto run detected, draw login window");
-        xrdp_login_wnd_create(self);
+        //g_writeln("   xrdp_wm_init: no autologin / auto run detected, draw login window");
+        //xrdp_login_wnd_create(self);
+	RdpCreateWindow(self);
+	RdpCreateWindow(self);
+	printf("CreateDesktop should go herei\n");
         /* clear screen */
         xrdp_bitmap_invalidate(self->screen, 0);
-        xrdp_wm_set_focused(self, self->login_window);
-        xrdp_wm_set_login_mode(self, 1);
+        //xrdp_wm_set_focused(self, self->login_window);
+        //xrdp_wm_set_login_mode(self, 1);
     }
 
     g_writeln("out xrdp_wm_init: ");

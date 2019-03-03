@@ -628,6 +628,192 @@ xrdp_wm_login_fill_in_combo(struct xrdp_wm *self, struct xrdp_bitmap *b)
     return 0;
 }
 
+int RdpCreateWindow(struct xrdp_wm *self)
+{
+    struct xrdp_bitmap      *but;
+    struct xrdp_bitmap      *combo;
+    struct xrdp_cfg_globals *globals;
+
+    char buf[256];
+    char buf1[256];
+    char resultIP[256];
+    int log_width;
+    int log_height;
+    int regular;
+    int primary_x_offset;
+    int primary_y_offset;
+    int index;
+    int x;
+    int y;
+    int cx;
+    int cy;
+
+    globals = &self->xrdp_config->cfg_globals;
+
+    primary_x_offset = self->screen->width / 2;
+    primary_y_offset = self->screen->height / 2;
+
+   // log_width = globals->ls_width;
+   // log_height = globals->ls_height;
+    log_width = 300;
+    log_height = 300;
+    regular = 1;
+
+#if 0
+    if (self->screen->width < log_width)
+    {
+        if (self->screen->width < 240)
+        {
+            log_width = self->screen->width - 4;
+        }
+        else
+        {
+            log_width = 240;
+        }
+
+        regular = 0;
+    }
+#endif
+
+    /* draw login window */
+    self->login_window = xrdp_bitmap_create(log_width, log_height, self->screen->bpp,
+                                            WND_TYPE_WND, self);
+    list_add_item(self->screen->child_list, (long)self->login_window);
+    self->login_window->parent = self->screen;
+    self->login_window->owner = self->screen;
+    self->login_window->bg_color = globals->ls_bg_color;
+
+    self->login_window->left = primary_x_offset - self->login_window->width / 2;
+    self->login_window->top = primary_y_offset - self->login_window->height / 2;
+
+
+    self->login_window->notify = xrdp_wm_login_notify;
+
+    /* if window title not specified, use hostname as default */
+    if (globals->ls_title[0] == 0)
+    {
+       g_gethostname(buf1, 256);
+       g_sprintf(buf, "Login to %s", buf1);
+       set_string(&self->login_window->caption1, buf);
+    }
+    else
+    {
+       /*self->login_window->caption1 = globals->ls_title[0];*/
+       g_sprintf(buf, "%s", globals->ls_title);
+       set_string(&self->login_window->caption1, buf);
+    }
+  #if 0
+    if (regular)
+    {
+        /* Load the background image. */
+        /* If no file is specified no default image will be loaded. */
+        /* We only load the image if bpp > 8 */
+        if (globals->ls_background_image[0] != 0 && self->screen->bpp > 8)
+        {
+            char fileName[256] ;
+            but = xrdp_bitmap_create(4, 4, self->screen->bpp, WND_TYPE_IMAGE, self);
+            if (globals->ls_background_image[0] == '/')
+            {
+                g_snprintf(fileName, 255, "%s", globals->ls_background_image);
+            }
+            else
+            {
+                g_snprintf(fileName, 255, "%s/%s",
+                           XRDP_SHARE_PATH, globals->ls_background_image);
+            }
+            log_message(LOG_LEVEL_DEBUG, "We try to load the following background file: %s", fileName);
+            xrdp_bitmap_load(but, fileName, self->palette);
+            but->parent = self->screen;
+            but->owner = self->screen;
+            but->left = self->screen->width - but->width;
+            but->top = self->screen->height - but->height;
+            list_add_item(self->screen->child_list, (long)but);
+        }
+
+        /* if logo image not specified, use default */
+        if (globals->ls_logo_filename[0] == 0)
+            g_snprintf(globals->ls_logo_filename, 255, "%s/xrdp_logo.bmp", XRDP_SHARE_PATH);
+
+        /* logo image */
+        but = xrdp_bitmap_create(4, 4, self->screen->bpp, WND_TYPE_IMAGE, self);
+
+        if (self->screen->bpp <= 8)
+            g_snprintf(globals->ls_logo_filename, 255, "%s/ad256.bmp", XRDP_SHARE_PATH);
+
+        xrdp_bitmap_load(but, globals->ls_logo_filename, self->palette);
+        but->parent = self->login_window;
+        but->owner = self->login_window;
+        but->left = globals->ls_logo_x_pos;
+        but->top = globals->ls_logo_y_pos;
+        list_add_item(self->login_window->child_list, (long)but);
+    }
+#endif
+#if 0
+    /* label */
+    but = xrdp_bitmap_create(globals->ls_label_width, DEFAULT_EDIT_H, self->screen->bpp, WND_TYPE_LABEL, self);
+    list_add_item(self->login_window->child_list, (long)but);
+    but->parent = self->login_window;
+    but->owner = self->login_window;
+    but->left = globals->ls_label_x_pos;
+    but->top = globals->ls_input_y_pos;
+    set_string(&but->caption1, "Session");
+    /* combo */
+    combo = xrdp_bitmap_create(globals->ls_input_width, DEFAULT_COMBO_H,
+                               self->screen->bpp, WND_TYPE_COMBO, self);
+    list_add_item(self->login_window->child_list, (long)combo);
+    combo->parent = self->login_window;
+    combo->owner = self->login_window;
+    combo->left = globals->ls_input_x_pos;
+    combo->top = globals->ls_input_y_pos;
+    combo->id = 6;
+    combo->tab_stop = 1;
+    xrdp_wm_login_fill_in_combo(self, combo);
+
+    /* OK button */
+    but = xrdp_bitmap_create(globals->ls_btn_ok_width, globals->ls_btn_ok_height,
+                             self->screen->bpp, WND_TYPE_BUTTON, self);
+    list_add_item(self->login_window->child_list, (long)but);
+    but->parent = self->login_window;
+    but->owner = self->login_window;
+    but->left = globals->ls_btn_ok_x_pos;
+    but->top = globals->ls_btn_ok_y_pos;
+    but->id = 3;
+    set_string(&but->caption1, "OK");
+    but->tab_stop = 1;
+    self->login_window->default_button = but;
+
+    /* Cancel button */
+    but = xrdp_bitmap_create(globals->ls_btn_cancel_width,
+                             globals->ls_btn_cancel_height, self->screen->bpp,
+                             WND_TYPE_BUTTON, self);
+    list_add_item(self->login_window->child_list, (long)but);
+    but->parent = self->login_window;
+    but->owner = self->login_window;
+    but->left = globals->ls_btn_cancel_x_pos;
+    but->top = globals->ls_btn_cancel_y_pos;
+    but->id = 2;
+    set_string(&but->caption1, "Cancel");
+    but->tab_stop = 1;
+    self->login_window->esc_button = but;
+    /* labels and edits.
+    * parameter: 1 = decode domain field index information from client.
+    * We only perform this the first time for each connection.
+    */
+    combo->item_index = xrdp_wm_parse_domain_information(
+                self->session->client_info->domain,
+                combo->data_list->count, 1,
+                resultIP /* just a dummy place holder, we ignore */ );
+    xrdp_wm_show_edits(self, combo);
+#endif
+    return 0;
+}
+
+
+
+
+/* This is the default login Window in standard xrdp
+ * We use it as a template for RdpCreateWindow
+ */
 /******************************************************************************/
 int
 xrdp_login_wnd_create(struct xrdp_wm *self)

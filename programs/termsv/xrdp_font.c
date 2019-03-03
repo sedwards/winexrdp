@@ -41,7 +41,6 @@
 #endif
 
 #include "xrdp.h"
-#include "log.h"
 
 #if 0 /* not used */
 static char w_char[] =

@@ -21,7 +21,7 @@
 #if !defined(TRANS_H)
 #define TRANS_H
 
-#include "arch.h"
+//#include "arch.h"
 #include "parse.h"
 
 #define TRANS_MODE_TCP 1

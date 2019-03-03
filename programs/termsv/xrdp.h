@@ -26,7 +26,7 @@
 
 
 /* include other h files */
-#include "arch.h"
+//#include "arch.h"
 #include "parse.h"
 #include "trans.h"
 #include "list.h"

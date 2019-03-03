@@ -23,7 +23,6 @@
 #endif
 
 #include "xrdp.h"
-#include "log.h"
 
 #if !defined(PACKAGE_VERSION)
 #define PACKAGE_VERSION "???"

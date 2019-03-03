@@ -23,7 +23,6 @@
 #endif
 
 #include "xrdp.h"
-#include "log.h"
 
 /* 'g_process' is protected by the semaphore 'g_process_sem'.  One thread sets
    g_process and waits for the other to process it */
