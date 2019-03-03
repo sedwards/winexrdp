@@ -214,3 +214,5 @@ VOID GetAnswerToRequest( LPSTR pchRequest,
     *pchBytes = (lstrlenA(pchReply)+1)*sizeof(CHAR);
 }
 
+
+

@@ -18,14 +18,12 @@
  * main program
  */
 
+#if 0
 #if defined(HAVE_CONFIG_H)
 #include <config_ac.h>
 #endif
 
-//#if defined(_WIN32)
-//#include <windows.h>
-//#endif
-//
+#include <windows.h>
 
 #include <windows.h>
 #include <winsvc.h>
@@ -34,17 +32,15 @@
 
 #include "xrdp.h"
 
-//static const WCHAR xrdpW[] = {'x','r','d','p','d',0};
-
-#if 0
+static const WCHAR xrdpW[] = {'x','r','d','p','d',0};
 
 static struct xrdp_listen *g_listen = 0;
 static long g_threadid = 0; /* main threadid */
 
-#if defined(_WIN32)
 static SERVICE_STATUS_HANDLE g_ssh = 0;
 static SERVICE_STATUS g_service_status;
-#endif
+static SERVICE_STATUS_HANDLE service_handle;
+
 static long g_sync_mutex = 0;
 static long g_sync1_mutex = 0;
 static tbus g_term_event = 0;
@@ -197,7 +193,7 @@ static VOID WINAPI service_handler( DWORD ctrl)
     {
     case SERVICE_CONTROL_STOP:
     case SERVICE_CONTROL_SHUTDOWN:
-        set_service_status( service_handle, SERVICE_STOP_PENDING, 0 );
+    //    set_service_status( service_handle, SERVICE_STOP_PENDING, 0 );
         return;
     default:
         set_service_status( service_handle, SERVICE_RUNNING,
@@ -253,7 +249,10 @@ static void WINAPI MyServiceMain( DWORD argc, LPWSTR *argv )
     g_service_status.dwWaitHint = 0;
     //  g_sprintf(text, "calling RegisterServiceCtrlHandler\r\n");
     //  g_file_write(fd, text, g_strlen(text));
-    RegisterServiceCtrlHandlerW((void *)xrdpW, MyHandler);
+    service_handle = RegisterServiceCtrlHandlerExW((void *)xrdpW, service_handler, NULL);
+
+    if (!service_handle)
+        return;
 
     //if (g_ssh != 0)
     //{
@@ -275,15 +274,16 @@ static void WINAPI MyServiceMain( DWORD argc, LPWSTR *argv )
     xrdp_listen_delete(g_listen);
     tc_mutex_delete(g_sync_mutex);
     tc_mutex_delete(g_sync1_mutex);
-    g_destroy_wait_obj(g_term_event);
-    g_destroy_wait_obj(g_sync_event);
+    //g_destroy_wait_obj(g_term_event);
+    //g_destroy_wait_obj(g_sync_event);
     WSACleanup();
     //CloseHandle(event_han);
 }
 
 /*****************************************************************************/
-int
-main(int argc, char **argv)
+//int
+//main(int argc, char **argv)
+int wmain(int argc, WCHAR *argv[])
 {
     int test;
     int host_be;

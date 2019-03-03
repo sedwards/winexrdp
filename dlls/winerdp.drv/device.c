@@ -238,6 +238,7 @@ static gralloc1_error_t (*gralloc1_lock)( gralloc1_device_t *device, buffer_hand
 static gralloc1_error_t (*gralloc1_unlock)( gralloc1_device_t *device, buffer_handle_t buffer,
                                             int32_t *outReleaseFence );
 
+#if 0
 static inline BOOL is_in_desktop_process(void)
 {
     return thread != NULL;
@@ -252,6 +253,7 @@ static inline BOOL is_client_in_process(void)
 {
     return current_client_id() == GetCurrentProcessId();
 }
+#endif 
 
 static inline void wrap_java_call(void) { }
 static inline void unwrap_java_call(void) { }
@@ -1123,8 +1125,8 @@ static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
 
 static NTSTATUS CALLBACK init_android_driver( DRIVER_OBJECT *driver, UNICODE_STRING *name )
 {
-    static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
-    static const WCHAR device_linkW[] = {'\\','?','?','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
+    static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','W','i','n','e','R','d','p',0 };
+    static const WCHAR device_linkW[] = {'\\','?','?','\\','W','i','n','e','R','d','p',0 };
 
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
@@ -1141,7 +1143,7 @@ static NTSTATUS CALLBACK init_android_driver( DRIVER_OBJECT *driver, UNICODE_STR
 
 static DWORD CALLBACK device_thread( void *arg )
 {
-    static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
+    static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r','\\','W','i','n','e','R','d','p',0 };
 
     HANDLE start_event = arg;
     UNICODE_STRING nameW;
@@ -1188,7 +1190,7 @@ void start_android_device(void)
 
 static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size )
 {
-    static const WCHAR deviceW[] = {'\\','\\','.','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
+    static const WCHAR deviceW[] = {'\\','\\','.','\\','W','i','n','e','R','d','p',0 };
     static HANDLE device;
     IO_STATUS_BLOCK iosb;
     NTSTATUS status;

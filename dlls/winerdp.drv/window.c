@@ -1238,9 +1238,9 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
 
 
 /***********************************************************************
- *           ANDROID_MsgWaitForMultipleObjectsEx
+ *           RDP_MsgWaitForMultipleObjectsEx
  */
-DWORD CDECL ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+DWORD CDECL RDP_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                                  DWORD timeout, DWORD mask, DWORD flags )
 {
     if (GetCurrentThreadId() == desktop_tid)
@@ -1256,11 +1256,11 @@ DWORD CDECL ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *hand
 void send_msg_pipe(char *msg);
 
 /**********************************************************************
- *           ANDROID_CreateWindow
+ *           RDP_CreateWindow
  */
-BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
+BOOL CDECL RDP_CreateWindow( HWND hwnd )
 {
-    FIXME( "ANDROID_CreateWindow %p\n", hwnd );
+    FIXME( "RDP_CreateWindow %p\n", hwnd );
 
     send_msg_pipe("send_msg_pipe: from CreateWindow");
 
@@ -1279,9 +1279,9 @@ BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
 
 
 /***********************************************************************
- *           ANDROID_DestroyWindow
+ *           RDP_DestroyWindow
  */
-void CDECL ANDROID_DestroyWindow( HWND hwnd )
+void CDECL RDP_DestroyWindow( HWND hwnd )
 {
     struct android_win_data *data;
 
@@ -1331,9 +1331,9 @@ static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rec
 
 
 /***********************************************************************
- *           ANDROID_WindowPosChanging
+ *           RDP_WindowPosChanging
  */
-void CDECL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+void CDECL RDP_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                      const RECT *window_rect, const RECT *client_rect, RECT *visible_rect,
                                      struct window_surface **surface )
 {
@@ -1386,9 +1386,9 @@ done:
 
 
 /***********************************************************************
- *           ANDROID_WindowPosChanged
+ *           RDP_WindowPosChanged
  */
-void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+void CDECL RDP_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                     const RECT *window_rect, const RECT *client_rect,
                                     const RECT *visible_rect, const RECT *valid_rects,
                                     struct window_surface *surface )
@@ -1424,9 +1424,9 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
 
 
 /***********************************************************************
- *           ANDROID_ShowWindow
+ *           RDP_ShowWindow
  */
-UINT CDECL ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
+UINT CDECL RDP_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 {
     if (IsRectEmpty( rect )) return swp;
     if (!IsIconic( hwnd )) return swp;
@@ -1441,9 +1441,9 @@ UINT CDECL ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 
 
 /*****************************************************************
- *	     ANDROID_SetParent
+ *	     RDP_SetParent
  */
-void CDECL ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent )
+void CDECL RDP_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
     struct android_win_data *data;
 
@@ -1459,9 +1459,9 @@ void CDECL ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 
 
 /***********************************************************************
- *           ANDROID_SetCapture
+ *           RDP_SetCapture
  */
-void CDECL ANDROID_SetCapture( HWND hwnd, UINT flags )
+void CDECL RDP_SetCapture( HWND hwnd, UINT flags )
 {
     if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
     ioctl_set_capture( hwnd );
@@ -1469,9 +1469,9 @@ void CDECL ANDROID_SetCapture( HWND hwnd, UINT flags )
 
 
 /***********************************************************************
- *           ANDROID_SetCursor
+ *           RDP_SetCursor
  */
-void CDECL ANDROID_SetCursor( HCURSOR handle )
+void CDECL RDP_SetCursor( HCURSOR handle )
 {
     static HCURSOR last_cursor;
     static DWORD last_cursor_change;
@@ -1514,9 +1514,9 @@ void CDECL ANDROID_SetCursor( HCURSOR handle )
 
 
 /***********************************************************************
- *           ANDROID_SetWindowStyle
+ *           RDP_SetWindowStyle
  */
-void CDECL ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
+void CDECL RDP_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
     struct android_win_data *data;
     DWORD changed = style->styleNew ^ style->styleOld;
@@ -1538,9 +1538,9 @@ void CDECL ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 
 
 /***********************************************************************
- *           ANDROID_SetWindowRgn
+ *           RDP_SetWindowRgn
  */
-void CDECL ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+void CDECL RDP_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     struct android_win_data *data;
 
@@ -1554,11 +1554,11 @@ void CDECL ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 
 
 /***********************************************************************
- *	     ANDROID_SetLayeredWindowAttributes
+ *	     RDP_SetLayeredWindowAttributes
  */
-void CDECL ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+void CDECL RDP_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
-	FIXME("ANDROID_SetLayeredWindowAttributes\n");
+	FIXME("RDP_SetLayeredWindowAttributes\n");
 #if 0
     struct android_win_data *data;
 
@@ -1575,12 +1575,12 @@ void CDECL ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alp
 
 
 /*****************************************************************************
- *           ANDROID_UpdateLayeredWindow
+ *           RDP_UpdateLayeredWindow
  */
-BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+BOOL CDECL RDP_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
                                         const RECT *window_rect )
 {
-	FIXME("ANDROID_UpdateLayeredWindow\n");
+	FIXME("RDP_UpdateLayeredWindow\n");
     struct window_surface *surface;
     struct android_win_data *data;
     BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
@@ -1663,11 +1663,11 @@ done:
 }
 
 /**********************************************************************
- *           ANDROID_WindowMessage
+ *           RDP_WindowMessage
  */
-LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+LRESULT CDECL RDP_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
-	FIXME("ANDROID_WindowMessage\n");
+	FIXME("RDP_WindowMessage\n");
     struct android_win_data *data;
 
     switch (msg)
@@ -1700,9 +1700,9 @@ LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 
 
 /***********************************************************************
- *           ANDROID_create_desktop
+ *           RDP_create_desktop
  */
-BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
+BOOL CDECL RDP_create_desktop( UINT width, UINT height )
 {
     desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
                                                        (LONG_PTR)desktop_wndproc_wrapper );

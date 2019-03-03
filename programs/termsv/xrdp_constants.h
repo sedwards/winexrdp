@@ -620,6 +620,7 @@
 #define STATUS_DEVICE_OFF_LINE         0x80000010
 #define STATUS_DEVICE_BUSY             0x80000011
 
+#undef STATUS_INVALID_HANDLE
 #define STATUS_INVALID_HANDLE          0xc0000008
 #define STATUS_INVALID_PARAMETER       0xc000000d
 #define STATUS_NO_SUCH_FILE            0xc000000f
@@ -629,6 +630,7 @@
 #define STATUS_DISK_FULL               0xc000007f
 #define STATUS_FILE_IS_A_DIRECTORY     0xc00000ba
 #define STATUS_NOT_SUPPORTED           0xc00000bb
+#undef STATUS_TIMEOUT
 #define STATUS_TIMEOUT                 0xc0000102
 #define STATUS_CANCELLED               0xc0000120
 
@@ -756,10 +758,15 @@
 #define CF_HDROP                       15
 #define CF_LOCALE                      16
 #define CF_MAX                         17
+#undef CF_OWNERDISPLAY
 #define CF_OWNERDISPLAY                128
+#undef CF_DSPTEXT
 #define CF_DSPTEXT                     129
+#undef CF_DSPBITMAP
 #define CF_DSPBITMAP                   130
+#undef CF_DSPMETAFILEPICT
 #define CF_DSPMETAFILEPICT             131
+#undef CF_DSPENHMETAFILE
 #define CF_DSPENHMETAFILE              142
 #define CF_PRIVATEFIRST                512
 #define CF_PRIVATELAST                 767
@@ -787,13 +794,21 @@
 #define BUTTON_STATE_DOWN 1
 
 /* messages */
+#undef WM_PAINT
 #define WM_PAINT       3
+#undef WM_KEYDOWN
 #define WM_KEYDOWN     15
+#undef WM_KEYUP
 #define WM_KEYUP       16
+#undef WM_MOUSEMOVE
 #define WM_MOUSEMOVE   100
+#undef WM_LBUTTONUP
 #define WM_LBUTTONUP   101
+#undef WM_LBUTTONDOWN
 #define WM_LBUTTONDOWN 102
+#undef WM_RBUTTONUP
 #define WM_RBUTTONUP   103
+#undef WM_RBUTTONDOWN
 #define WM_RBUTTONDOWN 104
 #define WM_BUTTON3UP   105
 #define WM_BUTTON3DOWN 106
