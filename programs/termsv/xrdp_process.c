@@ -215,6 +215,8 @@ xrdp_process_data_in(struct trans *self)
     return 0;
 }
 
+THREAD_RV THREAD_CC wine_named_pipe(VOID);
+
 /*****************************************************************************/
 int
 xrdp_process_main_loop(struct xrdp_process *self)
@@ -227,7 +229,11 @@ xrdp_process_main_loop(struct xrdp_process *self)
     tbus wobjs[32];
     tbus term_obj;
 
-    DEBUG(("xrdp_process_main_loop"));
+    printf(("xrdp_process_main_loop"));
+
+    /* Start our named pipe to listen for commands from the winerdp driver */
+    tc_thread_create(wine_named_pipe, 0);
+
     self->status = 1;
     self->server_trans->extra_flags = 0;
     self->server_trans->header_size = 0;

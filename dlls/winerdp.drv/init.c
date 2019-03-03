@@ -164,7 +164,7 @@ static RDP_PDEVICE *create_android_physdev(void)
 static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
                               LPCWSTR output, const DEVMODEW* initData )
 {
-	FIXME("RDP_CreateDC\n");
+//	FIXME("RDP_CreateDC\n");
 #if 0
     RDP_PDEVICE *physdev = create_android_physdev();
 
@@ -184,7 +184,7 @@ static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
  */
 static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
-	FIXME("RDP_CreateCompatibleDC\n");
+//	FIXME("RDP_CreateCompatibleDC\n");
 #if 0
     RDP_PDEVICE *physdev = create_android_physdev();
 
@@ -451,6 +451,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+	start_pipe_connection();
         DisableThreadLibraryCalls( inst );
         return process_attach();
     }

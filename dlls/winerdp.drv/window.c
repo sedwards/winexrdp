@@ -723,7 +723,6 @@ static void android_surface_set_region( struct window_surface *window_surface, H
     struct android_window_surface *surface = get_android_surface( window_surface );
 
     TRACE( "updating surface %p hwnd %p with %p\n", surface, surface->hwnd, region );
-#if 0
     window_surface->funcs->lock( window_surface );
     if (!region)
     {
@@ -1254,6 +1253,8 @@ DWORD CDECL ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *hand
                                      timeout, flags & MWMO_ALERTABLE );
 }
 
+void send_msg_pipe(char *msg);
+
 /**********************************************************************
  *           ANDROID_CreateWindow
  */
@@ -1261,11 +1262,14 @@ BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
 {
     FIXME( "ANDROID_CreateWindow %p\n", hwnd );
 
+    send_msg_pipe("send_msg_pipe: from CreateWindow");
+
     if (hwnd == GetDesktopWindow())
     {
         struct android_win_data *data;
 
         init_event_queue();
+	//start_pipe_connection();
         start_android_device();
         if (!(data = alloc_win_data( hwnd ))) return FALSE;
         release_win_data( data );
@@ -1700,7 +1704,6 @@ LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
  */
 BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
 {
-	FIXME("ANDROID_create_desktop\n");
     desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
                                                        (LONG_PTR)desktop_wndproc_wrapper );
 #if 0

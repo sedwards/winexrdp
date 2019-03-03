@@ -712,6 +712,7 @@ static PVOID load_java_method( PVOID *method, const char *name, const char *args
 
 static void create_desktop_window( HWND hwnd )
 {
+	FIXME("Create Desktop Window\n");
 #if 0
     static PVOID method;
     PVOID object;
@@ -1166,7 +1167,13 @@ static DWORD CALLBACK device_thread( void *arg )
 
     return ret;
 }
-
+////////
+DWORD CALLBACK pipe_thread();
+void start_pipe_connection(void)
+{
+    CreateThread( NULL, 0, pipe_thread, NULL, 0, NULL );
+}
+///////
 void start_android_device(void)
 {
     HANDLE handles[2];
@@ -1178,7 +1185,6 @@ void start_android_device(void)
 }
 
 /* Client-side ioctl support */
-
 
 static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size )
 {
