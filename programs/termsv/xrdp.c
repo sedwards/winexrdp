@@ -24,10 +24,6 @@
 
 #include "xrdp.h"
 
-#if !defined(PACKAGE_VERSION)
-#define PACKAGE_VERSION "???"
-#endif
-
 #define THREAD_WAITING 100
 
 typedef short BOOL;
@@ -433,7 +429,6 @@ int wmain(int argc, WCHAR *argv[])
         g_writeln("xrdp: A Remote Desktop Protocol server.");
         g_writeln("Copyright (C) Jay Sorg 2004-2014");
         g_writeln("See http://www.xrdp.org for more information.");
-        g_writeln("Version %s", PACKAGE_VERSION);
         g_writeln("%s", "");
         g_deinit();
         g_exit(0);

@@ -568,6 +568,7 @@ xrdp_wm_init(struct xrdp_wm *self)
     xrdp_wm_load_static_pointers(self);
     self->screen->bg_color = self->xrdp_config->cfg_globals.ls_top_window_bg_color;
 
+#if 0
     if (self->session->client_info->rdp_autologin)
     {
         /*
@@ -720,6 +721,7 @@ xrdp_wm_init(struct xrdp_wm *self)
     }
     else
     {
+#endif
         //g_writeln("   xrdp_wm_init: no autologin / auto run detected, draw login window");
         //xrdp_login_wnd_create(self);
 	RdpCreateWindow(self);
@@ -729,7 +731,6 @@ xrdp_wm_init(struct xrdp_wm *self)
         xrdp_bitmap_invalidate(self->screen, 0);
         //xrdp_wm_set_focused(self, self->login_window);
         //xrdp_wm_set_login_mode(self, 1);
-    }
 
     g_writeln("out xrdp_wm_init: ");
     return 0;

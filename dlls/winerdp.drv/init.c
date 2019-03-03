@@ -50,11 +50,11 @@ MONITORINFOEXW default_monitor =
     sizeof(default_monitor),    /* cbSize */
     { 0, 0, 0, 0 },             /* rcMonitor */
     { 0, 0, 0, 0 },             /* rcWork */
-    //MONITORINFOF_PRIMARY,       /* dwFlags */
-    NULL,
+    MONITORINFOF_PRIMARY,       /* dwFlags */
     { '\\','\\','.','\\','D','I','S','P','L','A','Y','1',0 }   /* szDevice */
 };
 
+/* FIXME: Detect this from the RDP Channel */
 static const unsigned int screen_bpp = 32;  /* we don't support other modes */
 
 static int device_init_done;
@@ -108,7 +108,6 @@ void set_screen_dpi( DWORD dpi )
  */
 static void fetch_display_metrics(void)
 {
-//    if (wine_get_java_vm()) return;  /* for Java threads it will be set when the top view is created */
     FIXME("fetch_display_metrics\n");
     SERVER_START_REQ( get_window_rectangles )
     {
@@ -145,7 +144,7 @@ static void device_init(void)
  */
 static RDP_PDEVICE *create_android_physdev(void)
 {
-	FIXME("create_android_physdev\n");
+    FIXME("create_android_physdev\n");
     RDP_PDEVICE *physdev;
 
     if (!device_init_done) 
@@ -204,8 +203,8 @@ static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
  */
 static BOOL RDP_DeleteDC( PHYSDEV dev )
 {
-	//FIXME("RDP_DeleteDC\n");
-  //  HeapFree( GetProcessHeap(), 0, dev );
+    //FIXME("RDP_DeleteDC\n");
+    HeapFree( GetProcessHeap(), 0, dev );
     return TRUE;
 }
 
@@ -281,12 +280,12 @@ BOOL CDECL RDP_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode,
         devmode->dmBitsPerPel = screen_bpp;
         devmode->dmDisplayFrequency = 60;
         devmode->dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
-        TRACE( "mode %d -- %dx%d %d bpp @%d Hz\n", n,
+        FIXME( "mode %d -- %dx%d %d bpp @%d Hz\n", n,
                devmode->dmPelsWidth, devmode->dmPelsHeight,
                devmode->dmBitsPerPel, devmode->dmDisplayFrequency );
         return TRUE;
     }
-    TRACE( "mode %d -- not present\n", n );
+    FIXME( "mode %d -- not present\n", n );
     SetLastError( ERROR_NO_MORE_FILES );
     return FALSE;
 }

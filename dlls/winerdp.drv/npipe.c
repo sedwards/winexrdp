@@ -109,7 +109,8 @@ void pipe_thread(void)
     if ( ! fSuccess)
     {
       printf( ("ReadFile from pipe failed. GLE=%d\n"), GetLastError() );
-      return -1;
+      ExitProcess(GetLastError()); 
+      //return -1;
     }
 
     printf("RDP Client Pipe Initialization Complete");
