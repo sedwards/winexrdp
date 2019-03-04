@@ -1217,6 +1217,7 @@ static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void
     return STATUS_SUCCESS;
 }
 
+#if 0
 static void win_incRef( struct android_native_base_t *base )
 {
     struct native_win_wrapper *win = (struct native_win_wrapper *)base;
@@ -1250,7 +1251,6 @@ static void buffer_decRef( struct android_native_base_t *base )
 static int dequeueBuffer( struct HANDLE *window, struct HANDLEBuffer **buffer, int *fence )
 {
     FIXME("dequeueBuffer");
-#if 0
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
     struct ioctl_android_dequeueBuffer res;
     DWORD size = sizeof(res);
@@ -1303,16 +1303,14 @@ static int dequeueBuffer( struct HANDLE *window, struct HANDLEBuffer **buffer, i
 
     *buffer = &win->buffers[res.buffer_id]->buffer;
     *fence = -1;
-#endif
 
-    //TRACE( "hwnd %p, buffer %p %dx%d stride %d fmt %d usage %d fence %d\n",
-    //       win->hwnd, *buffer, res.width, res.height, res.stride, res.format, res.usage, *fence );
+    TRACE( "hwnd %p, buffer %p %dx%d stride %d fmt %d usage %d fence %d\n",
+           win->hwnd, *buffer, res.width, res.height, res.stride, res.format, res.usage, *fence );
     return 0;
 }
 
 static int cancelBuffer( struct HANDLE *window, struct HANDLEBuffer *buffer, int fence )
 {
-#if 0
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
     struct native_buffer_wrapper *buf = (struct native_buffer_wrapper *)buffer;
     struct ioctl_android_cancelBuffer cancel;
@@ -1326,12 +1324,10 @@ static int cancelBuffer( struct HANDLE *window, struct HANDLEBuffer *buffer, int
     cancel.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
     return android_ioctl( IOCTL_CANCEL_BUFFER, &cancel, sizeof(cancel), NULL, NULL );
-#endif
 }
 
 static int queueBuffer( struct HANDLE *window, struct HANDLEBuffer *buffer, int fence )
 {
-#if 0
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
     struct native_buffer_wrapper *buf = (struct native_buffer_wrapper *)buffer;
     struct ioctl_android_queueBuffer queue;
@@ -1345,7 +1341,6 @@ static int queueBuffer( struct HANDLE *window, struct HANDLEBuffer *buffer, int 
     queue.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
     return android_ioctl( IOCTL_QUEUE_BUFFER, &queue, sizeof(queue), NULL, NULL );
-#endif
 }
 
 static int dequeueBuffer_DEPRECATED( struct HANDLE *window, struct HANDLEBuffer **buffer )
@@ -1494,7 +1489,6 @@ static int perform( HANDLE *window, int operation, ... )
     return android_ioctl( IOCTL_PERFORM, &perf, sizeof(perf), NULL, NULL );
 }
 
-#if 0
 struct HANDLE *create_ioctl_window( HWND hwnd, BOOL opengl, float scale )
 {
     struct ioctl_android_create_window req;
@@ -1529,7 +1523,6 @@ struct HANDLE *create_ioctl_window( HWND hwnd, BOOL opengl, float scale )
 
     return &win->win;
 }
-#endif
 
 struct HANDLE *grab_ioctl_window( struct HANDLE *window )
 {
@@ -1553,16 +1546,16 @@ void release_ioctl_window( struct HANDLE *window )
     destroy_ioctl_window( win->hwnd, win->opengl );
     HeapFree( GetProcessHeap(), 0, win );
 }
-
+#endif
 void destroy_ioctl_window( HWND hwnd, BOOL opengl )
 {
     struct ioctl_android_destroy_window req;
 
     req.hdr.hwnd = HandleToLong( hwnd );
     req.hdr.opengl = opengl;
-    android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL );
+    //android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL );
 }
-
+#if 0
 int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
                               const RECT *visible_rect, UINT style, UINT flags, HWND after, HWND owner )
 {
@@ -1590,6 +1583,9 @@ int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale )
     req.scale = scale;
     return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
 }
+
+#endif
+
 
 int ioctl_set_capture( HWND hwnd )
 {
@@ -1620,4 +1616,3 @@ int ioctl_set_cursor( int id, int width, int height,
     HeapFree( GetProcessHeap(), 0, req );
     return ret;
 }
-

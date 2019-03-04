@@ -1721,3 +1721,45 @@ BOOL CDECL RDP_create_desktop( UINT width, UINT height )
     return TRUE;
 }
 
+/**********************************************************************
+ *              CreateDesktopWindow   (MACDRV.@)
+ */
+BOOL CDECL RDP_CreateDesktopWindow(HWND hwnd)
+{
+    unsigned int width, height;
+
+    TRACE("%p\n", hwnd);
+
+    /* retrieve the real size of the desktop */
+    SERVER_START_REQ(get_window_rectangles)
+    {
+        req->handle = wine_server_user_handle(hwnd);
+        req->relative = COORDS_CLIENT;
+        wine_server_call(req);
+        width  = reply->window.right;
+        height = reply->window.bottom;
+    }
+    SERVER_END_REQ;
+
+    if (!width && !height)  /* not initialized yet */
+    {
+        //CGRect rect = macdrv_get_desktop_rect();
+
+        SERVER_START_REQ(set_window_pos)
+        {
+            req->handle        = wine_server_user_handle(hwnd);
+            req->previous      = 0;
+            req->swp_flags     = SWP_NOZORDER;
+            //req->window.left   = CGRectGetMinX(rect);
+            //req->window.top    = CGRectGetMinY(rect);
+            //req->window.right  = CGRectGetMaxX(rect);
+            //req->window.bottom = CGRectGetMaxY(rect);
+            req->client        = req->window;
+            wine_server_call(req);
+        }
+        SERVER_END_REQ;
+    }
+
+    return TRUE;
+}
+

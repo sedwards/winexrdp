@@ -14,6 +14,7 @@
 ;@ cdecl EnumDisplayMonitors(long ptr ptr long) RDP_EnumDisplayMonitors
 ;@ cdecl EnumDisplaySettingsEx(ptr long ptr long) RDP_EnumDisplaySettingsEx
 ;@ cdecl GetMonitorInfo(long ptr) RDP_GetMonitorInfo
+@ cdecl CreateDesktopWindow(long) RDP_CreateDesktopWindow
 @ cdecl CreateWindow(long) RDP_CreateWindow
 @ cdecl DestroyWindow(long) RDP_DestroyWindow
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) RDP_MsgWaitForMultipleObjectsEx
