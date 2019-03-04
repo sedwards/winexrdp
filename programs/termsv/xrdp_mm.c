@@ -172,8 +172,9 @@ xrdp_mm_delete(struct xrdp_mm *self)
 static int
 xrdp_mm_send_login(struct xrdp_mm *self)
 {
-    struct stream *s;
+    //struct stream *s;
     int rv;
+#if 0
     int index;
     int count;
     int xserverbpp;
@@ -292,7 +293,7 @@ xrdp_mm_send_login(struct xrdp_mm *self)
         xrdp_wm_log_msg(self->wm, LOG_LEVEL_WARNING,
                         "xrdp_mm_send_login: xrdp_mm_send_login failed");
     }
-
+#endif
     return rv;
 }
 
@@ -1163,6 +1164,7 @@ xrdp_mm_chan_send_init(struct xrdp_mm *self)
 static int
 xrdp_mm_connect_chansrv(struct xrdp_mm *self, const char *ip, const char *port)
 {
+#if 0
     int index;
 
     self->usechansrv = 1;
@@ -1219,12 +1221,13 @@ xrdp_mm_connect_chansrv(struct xrdp_mm *self, const char *ip, const char *port)
                         "connect successful");
         }
     }
-
+#endif
     return 0;
 }
 
 static void cleanup_sesman_connection(struct xrdp_mm *self)
 {
+#if 0
     self->delete_sesman_trans = 1;
     self->connected_state = 0;
 
@@ -1233,6 +1236,7 @@ static void cleanup_sesman_connection(struct xrdp_mm *self)
         xrdp_wm_set_login_mode(self->wm, 11);
         xrdp_mm_module_cleanup(self);
     }
+#endif
 }
 
 /*****************************************************************************/
@@ -1306,6 +1310,7 @@ xrdp_mm_process_login_response(struct xrdp_mm *self, struct stream *s)
 static int
 xrdp_mm_get_sesman_port(char *port, int port_bytes)
 {
+#if 0
     int fd;
     int error;
     int index;
@@ -1358,7 +1363,7 @@ xrdp_mm_get_sesman_port(char *port, int port_bytes)
 
     if (fd != -1)
         g_file_close(fd);
-
+#endif
     return 0;
 }
 
@@ -1369,8 +1374,9 @@ int
 xrdp_mm_process_channel_data(struct xrdp_mm *self, tbus param1, tbus param2,
                              tbus param3, tbus param4)
 {
-    struct stream *s;
+    //struct stream *s;
     int rv;
+#if 0
     int length;
     int total_length;
     int flags;
@@ -1410,7 +1416,7 @@ xrdp_mm_process_channel_data(struct xrdp_mm *self, tbus param1, tbus param2,
             rv = trans_force_write(self->chan_trans);
         }
     }
-
+#endif
     return rv;
 }
 
@@ -1419,11 +1425,12 @@ xrdp_mm_process_channel_data(struct xrdp_mm *self, tbus param1, tbus param2,
 static int
 xrdp_mm_sesman_data_in(struct trans *trans)
 {
-    struct xrdp_mm *self;
-    struct stream *s;
-    int version;
-    int size;
+    //struct xrdp_mm *self;
+    //struct stream *s;
+    //int version;
+    //int size;
     int error;
+ #if 0
     int code;
 
     if (trans == 0)
@@ -1461,7 +1468,7 @@ xrdp_mm_sesman_data_in(struct trans *trans)
                 break;
         }
     }
-
+#endif
     return error;
 }
 
@@ -1928,7 +1935,7 @@ xrdp_mm_connect(struct xrdp_mm *self)
             self->usechansrv = 1;
         }
     }
-
+#if 0
 #ifndef USE_NOPAM
     if (use_pam_auth)
     {
@@ -1970,6 +1977,7 @@ xrdp_mm_connect(struct xrdp_mm *self)
             return rv;
         }
     }
+#endif
 #endif
 
     if (self->sesman_controlled)

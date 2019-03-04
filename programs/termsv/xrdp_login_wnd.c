@@ -628,6 +628,79 @@ xrdp_wm_login_fill_in_combo(struct xrdp_wm *self, struct xrdp_bitmap *b)
     return 0;
 }
 
+int RdpCreateChildWindow(struct xrdp_wm *self)
+{
+ //   struct xrdp_bitmap      *but;
+ //   struct xrdp_bitmap      *combo;
+    struct xrdp_cfg_globals *globals;
+
+    char buf[256];
+    char buf1[256];
+    char resultIP[256];
+    int log_width;
+    int log_height;
+    int regular;
+    int primary_x_offset;
+    int primary_y_offset;
+    int index;
+    int x;
+    int y;
+    int cx;
+    int cy;
+    int WindowID;
+
+    globals = &self->xrdp_config->cfg_globals;
+
+    primary_x_offset = self->screen->width / 2;
+    primary_y_offset = self->screen->height / 2;
+
+   // log_width = globals->ls_width;
+   // log_height = globals->ls_height;
+    log_width = 150;
+    log_height = 150;
+    regular = 1;
+
+    /* draw login window */
+    self->child_window = xrdp_bitmap_create(log_width, log_height, self->screen->bpp,
+                                            WND_TYPE_WND, self);
+//    list_add_item(self->screen->child_list, (long)self->login_window->child_window);
+//    self->login_window->parent = self->screen;
+//    self->login_window->owner = self->screen;
+    self->child_window->parent = self->login_window;
+    self->child_window->owner = self->login_window;
+
+
+    self->child_window->bg_color = globals->ls_bg_color;
+//    self->child_window->left = primary_x_offset - self->child_window->width / 2;
+    self->child_window->left = globals->ls_logo_x_pos;
+//    self->child_window->top = primary_y_offset - self->child_window->height / 2;
+    self->child_window->top = globals->ls_logo_y_pos; 
+    self->child_window->notify = xrdp_wm_login_notify;
+
+//        but->parent = self->login_window;
+//        but->owner = self->login_window;
+//        but->left = globals->ls_logo_x_pos;
+//        but->top = globals->ls_logo_y_pos;
+        list_add_item(self->login_window->child_list, (long)self->child_window);
+
+
+    /* if window title not specified, use hostname as default */
+    if (globals->ls_title[0] == 0)
+    {
+       g_gethostname(buf1, 256);
+       g_sprintf(buf, "%s", buf1);
+       set_string(&self->child_window->caption1, buf);
+    }
+    else
+    {
+       /*self->login_window->caption1 = globals->ls_title[0];*/
+       g_sprintf(buf, "%s", globals->ls_title);
+       set_string(&self->child_window->caption1, buf);
+    }
+    return 0;
+}
+
+
 int RdpCreateWindow(struct xrdp_wm *self)
 {
     struct xrdp_bitmap      *but;
@@ -647,6 +720,7 @@ int RdpCreateWindow(struct xrdp_wm *self)
     int y;
     int cx;
     int cy;
+    int WindowID;
 
     globals = &self->xrdp_config->cfg_globals;
 

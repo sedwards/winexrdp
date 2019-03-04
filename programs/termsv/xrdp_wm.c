@@ -543,6 +543,7 @@ xrdp_wm_load_static_pointers(struct xrdp_wm *self)
 }
 
 int RdpCreateWindow(struct xrdp_wm *self);
+int RdpCreateChildWindow(struct xrdp_wm *self);
 
 /*****************************************************************************/
 int
@@ -725,7 +726,8 @@ xrdp_wm_init(struct xrdp_wm *self)
         //g_writeln("   xrdp_wm_init: no autologin / auto run detected, draw login window");
         //xrdp_login_wnd_create(self);
 	RdpCreateWindow(self);
-	RdpCreateWindow(self);
+	//RdpCreateWindow(self);
+	RdpCreateChildWindow(self);
 	printf("CreateDesktop should go herei\n");
         /* clear screen */
         xrdp_bitmap_invalidate(self->screen, 0);
