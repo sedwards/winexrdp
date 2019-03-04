@@ -36,7 +36,7 @@
 #endif
 
 #include "xrdp_encoder.h"
-#include "xrdp_sockets.h"
+//#include "xrdp_sockets.h"
 
 #define LLOG_LEVEL 1
 #define LLOGLN(_level, _args) \
@@ -539,14 +539,14 @@ xrdp_mm_setup_mod2(struct xrdp_mm *self, tui8 *guid)
                     }
                 }
 
-                if (use_uds)
-                {
-                    g_snprintf(text, 255, XRDP_X11RDP_STR, self->display);
-                }
-                else
-                {
+                //if (use_uds)
+                //{
+                //    g_snprintf(text, 255, XRDP_X11RDP_STR, self->display);
+                //}
+                //else
+                //{
                     g_snprintf(text, 255, "%d", 6200 + self->display);
-                }
+                //}
             }
             else
             {
@@ -1239,6 +1239,7 @@ static void cleanup_sesman_connection(struct xrdp_mm *self)
 static int
 xrdp_mm_process_login_response(struct xrdp_mm *self, struct stream *s)
 {
+#if 0
     int ok;
     int display;
     int rv;
@@ -1270,15 +1271,15 @@ xrdp_mm_process_login_response(struct xrdp_mm *self, struct stream *s)
                 xrdp_wm_set_login_mode(self->wm, 10);
                 self->wm->dragging = 0;
 
-                /* connect channel redir */
-                if ((g_strcmp(ip, "127.0.0.1") == 0) || (ip[0] == 0))
-                {
-                    g_snprintf(port, 255, XRDP_CHANSRV_STR, display);
-                }
-                else
-                {
+                ///* connect channel redir */
+                //if ((g_strcmp(ip, "127.0.0.1") == 0) || (ip[0] == 0))
+                //{
+                //    g_snprintf(port, 255, XRDP_CHANSRV_STR, display);
+                //}
+                //else
+                //{
                     g_snprintf(port, 255, "%d", 7200 + display);
-                }
+                //}
 
                 xrdp_mm_connect_chansrv(self, ip, port);
             }
@@ -1297,6 +1298,8 @@ xrdp_mm_process_login_response(struct xrdp_mm *self, struct stream *s)
 
     cleanup_sesman_connection(self);
     return rv;
+#endif
+    return 0;
 }
 
 /*****************************************************************************/
