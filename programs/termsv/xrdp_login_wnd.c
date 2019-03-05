@@ -628,7 +628,7 @@ xrdp_wm_login_fill_in_combo(struct xrdp_wm *self, struct xrdp_bitmap *b)
     return 0;
 }
 
-int RdpCreateChildWindow(struct xrdp_wm *self)
+int TermsvCreateChildWindow(struct xrdp_wm *self)
 {
  //   struct xrdp_bitmap      *but;
  //   struct xrdp_bitmap      *combo;
@@ -701,7 +701,7 @@ int RdpCreateChildWindow(struct xrdp_wm *self)
 }
 
 
-int RdpCreateWindow(struct xrdp_wm *self)
+int TermsvCreateWindow(struct xrdp_wm *self)
 {
     struct xrdp_bitmap      *but;
     struct xrdp_bitmap      *combo;

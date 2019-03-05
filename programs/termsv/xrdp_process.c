@@ -63,6 +63,8 @@ xrdp_process_delete(struct xrdp_process *self)
     g_free(self);
 }
 
+int rdp_client_info_width, rdp_client_info_height, rdp_client_info_bpp;
+
 /*****************************************************************************/
 static int
 xrdp_process_loop(struct xrdp_process *self, struct stream *s)
@@ -80,13 +82,20 @@ xrdp_process_loop(struct xrdp_process *self, struct stream *s)
         if ((self->wm == 0) && (self->session->up_and_running) && (rv == 0))
         {
             DEBUG(("calling xrdp_wm_init and creating wm"));
+	    
 	    g_snprintf(text, 255, "%d", self->session->client_info->width);
 	    printf("width %s\n,", text);
+            rdp_client_info_width = self->session->client_info->width;
+
             g_snprintf(text, 255, "%d", self->session->client_info->height);
 	    printf("height %s\n,", text);
-            g_snprintf(text, 255, "%d", self->session->client_info->bpp);
+            rdp_client_info_height = self->session->client_info->height;
+            
+	    g_snprintf(text, 255, "%d", self->session->client_info->bpp);
 	    printf("bpp %s\n,", text);
-            self->wm = xrdp_wm_create(self, self->session->client_info);
+            rdp_client_info_bpp = self->session->client_info->bpp;
+            
+	    self->wm = xrdp_wm_create(self, self->session->client_info);
             /* at this point the wm(window manager) is create and wm::login_mode is
                zero and login_mode_event is set so xrdp_wm_init should be called by
                xrdp_wm_check_wait_objs */

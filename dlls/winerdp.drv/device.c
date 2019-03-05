@@ -1153,7 +1153,7 @@ static DWORD CALLBACK device_thread( void *arg )
 
     FIXME( "starting process %x\n", GetCurrentProcessId() );
 
-    create_desktop_window( GetDesktopWindow() );
+    //create_desktop_window( GetDesktopWindow() );
 
     RtlInitUnicodeString( &nameW, driver_nameW );
     if ((status = IoCreateDriver( &nameW, init_android_driver )))

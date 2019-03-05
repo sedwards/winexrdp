@@ -32,10 +32,13 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+
+#include "xrdp_types.h"
 
 #define OEMRESOURCE
 #include "windef.h"
@@ -1344,7 +1347,7 @@ void CDECL RDP_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
     BYTE alpha;
     BOOL layered = GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
-    TRACE( "win %p window %s client %s style %08x flags %08x\n",
+    FIXME( "win %p window %s client %s style %08x flags %08x\n",
            hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
            GetWindowLongW( hwnd, GWL_STYLE ), swp_flags );
 
@@ -1698,14 +1701,32 @@ LRESULT CDECL RDP_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     }
 }
 
+void (WINAPI *pTermsvCreateWindow)(UINT width, UINT height);
 
 /***********************************************************************
  *           RDP_create_desktop
  */
 BOOL CDECL RDP_create_desktop( UINT width, UINT height )
 {
+    BOOL ret = FALSE;
+    HMODULE termsv_mod = NULL;
+
+    FIXME("Calling RDP_create_desktop\n");
+    {
+       termsv_mod = GetModuleHandleA(NULL);
+       if (termsv_mod == NULL)
+          FIXME("Unable to get a handle to termsrv.exe.so process\n");
+   
+       pTermsvCreateWindow = (void *)GetProcAddress(termsv_mod, "TermsvCreateWindow");
+       FIXME("Loaded Pointer to TermsvCreateWindow for the Desktop Window, FIX THE DAMN ARGUMENTS\n");
+       //pTermsvCreateWindow( width, height );
+    }
+
     desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
                                                        (LONG_PTR)desktop_wndproc_wrapper );
+
+    return ret;
+
 #if 0
     /* wait until we receive the surface changed event */
     while (!screen_width)
@@ -1718,7 +1739,7 @@ BOOL CDECL RDP_create_desktop( UINT width, UINT height )
         process_events( QS_ALLINPUT );
     }
 #endif
-    return TRUE;
+ //   return TRUE;
 }
 
 /**********************************************************************

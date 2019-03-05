@@ -26,6 +26,10 @@
 #include <stdio.h>
 #include "xrdp.h"
 
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
+
 /*****************************************************************************/
 struct xrdp_wm *
 xrdp_wm_create(struct xrdp_process *owner,
@@ -542,8 +546,74 @@ xrdp_wm_load_static_pointers(struct xrdp_wm *self)
     return 0;
 }
 
-int RdpCreateWindow(struct xrdp_wm *self);
-int RdpCreateChildWindow(struct xrdp_wm *self);
+int TermsvCreateWindow(struct xrdp_wm *self);
+int TermsvCreateChildWindow(struct xrdp_wm *self);
+
+static const WCHAR default_driver[] = {'r','d','p',0};
+
+static HMODULE load_graphics_driver()
+{
+    static const WCHAR device_keyW[] = {
+        'S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'V','i','d','e','o','\\',
+        '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
+        '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x','%','0','2','x',
+        '%','0','2','x','%','0','2','x','%','0','2','x','}','\\','0','0','0','0',0};
+
+    static const WCHAR graphics_driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+    static const WCHAR driversW[] = {'S','o','f','t','w','a','r','e','\\',
+                                     'W','i','n','e','\\','D','r','i','v','e','r','s',0};
+    static const WCHAR graphicsW[] = {'G','r','a','p','h','i','c','s',0};
+    static const WCHAR drv_formatW[] = {'w','i','n','e','%','s','.','d','r','v',0};
+
+    WCHAR buffer[MAX_PATH], libname[32], *name, *next;
+    WCHAR key[ARRAY_SIZE( device_keyW ) + 39];
+    HMODULE module = 0;
+    HKEY hkey;
+    char error[80];
+
+    //if (!driver)
+    //{
+        strcpyW( buffer, default_driver );
+
+        /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
+        if (!RegOpenKeyW( HKEY_CURRENT_USER, driversW, &hkey ))
+        {
+            DWORD count = sizeof(buffer);
+            RegQueryValueExW( hkey, graphicsW, 0, NULL, (LPBYTE)buffer, &count );
+            RegCloseKey( hkey );
+        }
+    //}
+    //else lstrcpynW( buffer, driver, ARRAY_SIZE( buffer ));
+
+    name = buffer;
+    while (name)
+    {
+        next = strchrW( name, ',' );
+        if (next) *next++ = 0;
+
+        snprintfW( libname, ARRAY_SIZE( libname ), drv_formatW, name );
+        if ((module = LoadLibraryW( libname )) != 0) break;
+        switch (GetLastError())
+        {
+        case ERROR_MOD_NOT_FOUND:
+            sprintf( error, "The graphics driver is missing. Check your build! Error: (%u).", GetLastError()  );
+            break;
+        case ERROR_DLL_INIT_FAILED:
+            sprintf( error, "RDP Driver DLL Initalization Failed. Error: (%u).", GetLastError()  );
+            break;
+        default:
+            sprintf( error, "Unknown error (%u).", GetLastError() );
+            break;
+        }
+        name = next;
+    }
+    return module;
+}
+
+
 
 /*****************************************************************************/
 int
@@ -725,9 +795,26 @@ xrdp_wm_init(struct xrdp_wm *self)
 #endif
         //g_writeln("   xrdp_wm_init: no autologin / auto run detected, draw login window");
         //xrdp_login_wnd_create(self);
-	RdpCreateWindow(self);
-	//RdpCreateWindow(self);
-	RdpCreateChildWindow(self);
+	TermsvCreateWindow(self);
+	TermsvCreateChildWindow(self);
+
+        //HMODULE driver = LoadLibraryA( "winerdp.dll" );
+	HMODULE driver = load_graphics_driver();
+        if (driver)
+        {
+	    printf("winedrp.dll was loaded\n");
+	    int width=1280, height=960;
+            BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
+
+            create_desktop_func = (void *)GetProcAddress( driver, "wine_create_desktop" );
+            if (create_desktop_func)
+            {
+                printf("Attempting to call wine_create_desktop in the RDP driver\n");
+                create_desktop_func( width, height );
+            }
+            FreeLibrary( driver );
+        }
+
 	printf("CreateDesktop should go herei\n");
         /* clear screen */
         xrdp_bitmap_invalidate(self->screen, 0);
