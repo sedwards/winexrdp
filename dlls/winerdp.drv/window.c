@@ -1256,16 +1256,12 @@ DWORD CDECL RDP_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                      timeout, flags & MWMO_ALERTABLE );
 }
 
-void send_msg_pipe(char *msg);
-
 /**********************************************************************
  *           RDP_CreateWindow
  */
 BOOL CDECL RDP_CreateWindow( HWND hwnd )
 {
     FIXME( "RDP_CreateWindow %p\n", hwnd );
-
-    send_msg_pipe("send_msg_pipe: from CreateWindow");
 
     if (hwnd == GetDesktopWindow())
     {
@@ -1305,7 +1301,7 @@ void CDECL RDP_DestroyWindow( HWND hwnd )
 static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_rect,
                                                  const RECT *client_rect )
 {
-	FIXME("android_win_data create_win_data\n");
+    FIXME("android_win_data create_win_data\n");
     struct android_win_data *data;
     HWND parent;
 
@@ -1322,7 +1318,7 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
 
 static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-	FIXME("get_surface_rect\n");
+    FIXME("get_surface_rect\n");
   //  if (!IntersectRect( surface_rect, visible_rect, &virtual_screen_rect )) return FALSE;
     OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );
     surface_rect->left &= ~31;
@@ -1583,7 +1579,7 @@ void CDECL RDP_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, 
 BOOL CDECL RDP_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
                                         const RECT *window_rect )
 {
-	FIXME("RDP_UpdateLayeredWindow\n");
+    FIXME("RDP_UpdateLayeredWindow\n");
     struct window_surface *surface;
     struct android_win_data *data;
     BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
@@ -1670,7 +1666,7 @@ done:
  */
 LRESULT CDECL RDP_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
-	FIXME("RDP_WindowMessage\n");
+    FIXME("RDP_WindowMessage\n");
     struct android_win_data *data;
 
     switch (msg)
@@ -1702,6 +1698,8 @@ LRESULT CDECL RDP_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 }
 
 void (WINAPI *pTermsvCreateWindow)(UINT width, UINT height);
+void rdpdrv_send_msg_pipe(char *msg);
+void rdpdrv_msg_pipe();
 
 /***********************************************************************
  *           RDP_create_desktop
@@ -1710,6 +1708,9 @@ BOOL CDECL RDP_create_desktop( UINT width, UINT height )
 {
     BOOL ret = FALSE;
     HMODULE termsv_mod = NULL;
+
+    rdpdrv_send_msg_pipe("rdpsend_msg_pipe: from RDP_create_desktop");
+    //rdpdrv_msg_pipe();
 
     FIXME("Calling RDP_create_desktop\n");
     {

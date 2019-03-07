@@ -11,12 +11,15 @@ VOID GetAnswerToRequest(LPSTR, LPSTR, LPDWORD);
 #define THREAD_RV void*
 #define THREAD_CC __stdcall
 
+HANDLE hPipe; 
+
 THREAD_RV THREAD_CC wine_named_pipe(VOID) 
 { 
    BOOL   fConnected = FALSE; 
    DWORD  dwThreadId = 0; 
-   HANDLE hPipe = INVALID_HANDLE_VALUE, hThread = NULL; 
+   HANDLE hThread = NULL; 
    LPSTR lpszPipename = "\\\\.\\pipe\\rdp_server"; 
+   hPipe = INVALID_HANDLE_VALUE;
  
 // The main loop creates an instance of the named pipe and 
 // then waits for a client to connect to it. When the client 
@@ -214,5 +217,56 @@ VOID GetAnswerToRequest( LPSTR pchRequest,
     *pchBytes = (lstrlenA(pchReply)+1)*sizeof(CHAR);
 }
 
+void termsv_msg_pipe(char *msg)
+{
+   CHAR  chBuf[BUFSIZE];
+   BOOL   fSuccess = FALSE;
+   DWORD  cbRead, cbToWrite, cbWritten, dwMode;
+   LPSTR lpvMessage="termsv_send_msg_pipe: Test Message\n";
 
+   cbToWrite = (lstrlenA(lpvMessage)+1)*sizeof(CHAR);
+   printf( ("termsv_msg_pipe: sending %d byte message from RDP Driver: \"%s\"\n"), cbToWrite, lpvMessage);
 
+   fSuccess = WriteFile(
+      hPipe,                  // pipe handle
+      lpvMessage,             // message
+      cbToWrite,              // message length
+      &cbWritten,             // bytes written
+      NULL);                  // not overlapped
+
+   if ( ! fSuccess)
+   {
+      printf( ("writing message to pipe failed. GLE=%d\n"), GetLastError() );
+   }
+}
+
+#if 0
+void termsv_read_msg_pipe()
+{
+   CHAR  chBuf[BUFSIZE];
+   BOOL   fSuccess = FALSE;
+   DWORD  cbRead, cbToWrite, cbWritten, dwMode;
+   do
+   {
+   // Read from the pipe.
+
+      fSuccess = ReadFile(
+         hPipe,    // pipe handle
+         chBuf,    // buffer to receive reply
+         BUFSIZE*sizeof(CHAR),  // size of buffer
+         &cbRead,  // number of bytes read
+         NULL);    // not overlapped
+
+      if ( ! fSuccess && GetLastError() != ERROR_MORE_DATA )
+         break;
+
+      printf( ("termsv_read_msg_pipe: \"%s\"\n"), chBuf );
+    } while ( ! fSuccess);  // repeat loop if ERROR_MORE_DATA
+
+    if ( ! fSuccess)
+    {
+      printf( ("Message Confirmation from pipe failed. GLE=%d\n"), GetLastError() );
+      return -1;
+    }
+}
+#endif

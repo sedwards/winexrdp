@@ -248,7 +248,7 @@ xrdp_process_main_loop(struct xrdp_process *self)
 
     printf(("xrdp_process_main_loop"));
 
-    /* Start our named pipe to listen for commands from the winerdp driver */
+   // /* Start our named pipe to listen for commands from the winerdp driver */
     tc_thread_create(wine_named_pipe, 0);
 
     self->status = 1;
@@ -314,6 +314,7 @@ xrdp_process_main_loop(struct xrdp_process *self)
         }
         /* send disconnect message if possible */
         libxrdp_disconnect(self->session);
+	g_exit(0);
     }
     else
     {
@@ -321,6 +322,7 @@ xrdp_process_main_loop(struct xrdp_process *self)
         /* this will try to send a disconnect,
            maybe should check that connection got far enough */
         libxrdp_disconnect(self->session);
+	g_exit(0);
     }
     /* Run end in module */
     xrdp_process_mod_end(self);
@@ -330,3 +332,5 @@ xrdp_process_main_loop(struct xrdp_process *self)
     g_set_wait_obj(self->done_event);
     return 0;
 }
+
+

@@ -562,7 +562,6 @@ static HMODULE load_graphics_driver()
         '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x','%','0','2','x',
         '%','0','2','x','%','0','2','x','%','0','2','x','}','\\','0','0','0','0',0};
 
-    static const WCHAR graphics_driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
     static const WCHAR driversW[] = {'S','o','f','t','w','a','r','e','\\',
                                      'W','i','n','e','\\','D','r','i','v','e','r','s',0};
     static const WCHAR graphicsW[] = {'G','r','a','p','h','i','c','s',0};
@@ -613,7 +612,8 @@ static HMODULE load_graphics_driver()
     return module;
 }
 
-
+void termsv_msg_pipe(char *msg);
+void termsv_read_msg_pipe();
 
 /*****************************************************************************/
 int
@@ -795,8 +795,12 @@ xrdp_wm_init(struct xrdp_wm *self)
 #endif
         //g_writeln("   xrdp_wm_init: no autologin / auto run detected, draw login window");
         //xrdp_login_wnd_create(self);
+        termsv_msg_pipe("termsv_send_msg_pipe: from RDP_create_desktop");
+        //termsv_read_msg_pipe();
+	
 	TermsvCreateWindow(self);
 	TermsvCreateChildWindow(self);
+
 
         //HMODULE driver = LoadLibraryA( "winerdp.dll" );
 	HMODULE driver = load_graphics_driver();

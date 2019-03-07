@@ -104,11 +104,10 @@ void main()
 
    if (pBuf == NULL)
    {
-	   printf("Error 2");
-      fprintf("Could not map view of file (%d).\n",
-             GetLastError());
+      printf("Error 2");
+      fprintf("Could not map view of file (%d).\n", GetLastError());
 
-       CloseHandle(hMapFile);
+      CloseHandle(hMapFile);
 
       return 1;
    }

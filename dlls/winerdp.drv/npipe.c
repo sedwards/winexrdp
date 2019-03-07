@@ -9,7 +9,7 @@ HANDLE hPipe;
 
 void pipe_thread(void) 
 { 
-   LPSTR lpvMessage="New RDP Client Connection to server\n"; 
+   LPSTR lpvMessage="New RDPdrv Client Connection to server\n"; 
    CHAR  chBuf[BUFSIZE]; 
    BOOL   fSuccess = FALSE; 
    DWORD  cbRead, cbToWrite, cbWritten, dwMode; 
@@ -116,7 +116,8 @@ void pipe_thread(void)
     printf("RDP Client Pipe Initialization Complete");
 }
 
-
+// We know this function is good, break it up in to something useful
+#if 0
 void send_msg_pipe(char *msg)
 {
    CHAR  chBuf[BUFSIZE];
@@ -165,4 +166,59 @@ void send_msg_pipe(char *msg)
       return -1;
     }
 }
+#endif
+
+void rdpdrv_send_msg_pipe(char *msg)
+{
+   CHAR  chBuf[BUFSIZE];
+   BOOL   fSuccess = FALSE;
+   DWORD  cbRead, cbToWrite, cbWritten, dwMode;
+   LPSTR lpvMessage="rdpdrv_send_msg_pipe: Test Message\n";
+
+   cbToWrite = (lstrlenA(lpvMessage)+1)*sizeof(CHAR);
+   printf( ("rdpdrv_msg_pipe: sending %d byte message from RDP Driver: \"%s\"\n"), cbToWrite, lpvMessage);
+
+   fSuccess = WriteFile(
+      hPipe,                  // pipe handle
+      lpvMessage,             // message
+      cbToWrite,              // message length
+      &cbWritten,             // bytes written
+      NULL);                  // not overlapped
+
+   if ( ! fSuccess)
+   {
+      printf( ("rdpdrv_send_msg_pipe pipe failed. GLE=%d\n"), GetLastError() );
+   }
+}
+
+#if 0
+void rdpdrv_msg_pipe()
+{
+   CHAR  chBuf[BUFSIZE];
+   BOOL   fSuccess = FALSE;
+   DWORD  cbRead, cbToWrite, cbWritten, dwMode;
+   do
+   {
+   // Read from the pipe.
+
+      fSuccess = ReadFile(
+         hPipe,    // pipe handle
+         chBuf,    // buffer to receive reply
+         BUFSIZE*sizeof(CHAR),  // size of buffer
+         &cbRead,  // number of bytes read
+         NULL);    // not overlapped
+
+      if ( ! fSuccess && GetLastError() != ERROR_MORE_DATA )
+         break;
+
+      printf( ("rdpdrv_read_msg_pipe: \"%s\"\n"), chBuf );
+    } while ( ! fSuccess);  // repeat loop if ERROR_MORE_DATA
+
+    if ( ! fSuccess)
+    {
+      printf( ("Message Confirmation from pipe failed. GLE=%d\n"), GetLastError() );
+      return -1;
+    }
+}
+#endif
 
