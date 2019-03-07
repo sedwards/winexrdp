@@ -612,8 +612,10 @@ static HMODULE load_graphics_driver()
     return module;
 }
 
-void termsv_msg_pipe(char *msg);
+void termsv_shm_msg(char *msg);
 void termsv_read_msg_pipe();
+
+extern LPCWSTR pBuf;
 
 /*****************************************************************************/
 int
@@ -795,8 +797,8 @@ xrdp_wm_init(struct xrdp_wm *self)
 #endif
         //g_writeln("   xrdp_wm_init: no autologin / auto run detected, draw login window");
         //xrdp_login_wnd_create(self);
-        termsv_msg_pipe("termsv_send_msg_pipe: from RDP_create_desktop");
-        //termsv_read_msg_pipe();
+        //termsv_msg_pipe("termsv_send_msg_pipe: from RDP_create_desktop");
+        termsv_shm_msg("termsv_shm_msg: Message from RDP_create_desktop");
 	
 	TermsvCreateWindow(self);
 	TermsvCreateChildWindow(self);

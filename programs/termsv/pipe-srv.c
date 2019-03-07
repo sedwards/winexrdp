@@ -1,3 +1,4 @@
+#if 0
 #include <windows.h> 
 #include <stdio.h> 
 //#include <tchar.h>
@@ -270,3 +271,153 @@ void termsv_read_msg_pipe()
     }
 }
 #endif
+#endif
+
+#include "config.h"
+#include "wine/port.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+
+#include <windows.h>
+
+#include "wine/debug.h"
+#include "wine/heap.h"
+
+
+#define BUF_SIZE 1024
+#define BUF_SIZE2 4096 
+const WCHAR szName[]={'G','l','o','b','a','l','\\','R','D','P','s','e','r','v','e','r','0',0};
+WCHAR buf[BUF_SIZE2]={'d','s','t',0};
+const WCHAR pbData[BUF_SIZE2]={'M','e','s','s','a','g','e','f','r','o','m','f','i','r','s','t','p','r','o','c','e','s','s',0};
+//char szName[]={"Global\\MyFileMappingObject"};
+const char szMsg[]={"Message from first process."};
+
+#define BUFFER_SIZE 1024
+#define COPY_SIZE 1024 
+
+#define THREAD_RV void*
+#define THREAD_CC __stdcall
+
+/*
+   MyCopyMemory - A wrapper for CopyMemory
+
+   buf     - destination buffer
+   pbData  - source buffer
+   cbData  - size of block to copy, in bytes
+   bufsize - size of the destination buffer
+*/
+#if 0
+void MyCopyMemory(WCHAR *buf, WCHAR *pbData, SIZE_T cbData, SIZE_T bufsize) 
+{
+    CopyMemory(buf, pbData, min(cbData,bufsize));
+}
+#endif
+
+static int mywprintf(const WCHAR *format, ...)
+{
+    static char output_bufA[65536];
+    static WCHAR output_bufW[sizeof(output_bufA)];
+    va_list             parms;
+    DWORD               nOut;
+    BOOL                res = FALSE;
+    HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    va_start(parms, format);
+    vsnprintfW(output_bufW, ARRAY_SIZE(output_bufW), format, parms);
+    va_end(parms);
+
+
+    DWORD   convertedChars;
+
+    /* Convert to OEM, then output */
+    convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, output_bufW, -1, 
+                                        output_bufA, sizeof(output_bufA),NULL, NULL);
+	 printf("%s\n",output_bufA);
+
+    return res ? nOut : 0;
+}
+
+LPCSTR pBuf;
+
+
+static int mywprintfA(const char *format, ...)
+{
+    static char output_bufA[65536];
+    va_list             parms;
+    DWORD               nOut;
+    BOOL                res = FALSE;
+    HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    va_start(parms, format);
+    vsnprintfW(output_bufA, ARRAY_SIZE(output_bufA), format, parms);
+    va_end(parms);
+
+    printf("%s\n",output_bufA);
+
+    return res ? nOut : 0;
+}
+
+
+THREAD_RV THREAD_CC wine_rdp_shm_thread(VOID)
+{
+   printf("printf----------------------Termsv: Entered Shared Memory Thread---------------------------------\n");
+   g_writeln("g_writeln----------------------Termsv: Entered Shared Memory Thread---------------------------------\n");
+   HANDLE hMapFile;
+//   LPCWSTR pBuf;
+
+   hMapFile = CreateFileMappingW(
+                 INVALID_HANDLE_VALUE,    // use paging file
+                 NULL,                    // default security
+                 PAGE_READWRITE,          // read/write access
+                 0,                       // maximum object size (high-order DWORD)
+                 BUF_SIZE,                // maximum object size (low-order DWORD)
+                 szName);                 // name of mapping object
+
+   if (hMapFile == NULL)
+   {
+      fprintf("Termsv: Could not create file mapping object (%d).\n",
+             GetLastError());
+      return 1;
+   }
+
+   pBuf = (LPSTR) MapViewOfFile(hMapFile,   // handle to map object
+                        FILE_MAP_ALL_ACCESS, // read/write permission
+                        0,
+                        0,
+                        BUF_SIZE);
+
+   if (pBuf == NULL)
+   {
+      fprintf("Termsv: Could not map view of file (%d).\n", GetLastError());
+      CloseHandle(hMapFile);
+      return 1;
+   }
+}
+
+void MyCopyMemory(char *buf, char *pbData, SIZE_T cbData, SIZE_T bufsize)
+{
+    CopyMemory(buf, pbData, min(cbData,bufsize));
+}
+
+void termsv_shm_msg(char *msg)
+{
+    MyCopyMemory(pBuf, msg, COPY_SIZE*sizeof(char), BUFFER_SIZE*sizeof(char));
+    mywprintfA("------------wrote:\n");
+    mywprintfA(pBuf);
+    mywprintfA("-------- To shared memory\n");
+}
+
+
+//    MyCopyMemory(pBuf, pbData, COPY_SIZE*sizeof(WCHAR), BUFFER_SIZE*sizeof(WCHAR));
+
+//    for(;;) {
+//    }
+   //getch();
+   //MyReadConsoleInput();
+//   UnmapViewOfFile(pBuf);
+
+//   CloseHandle(hMapFile);
+

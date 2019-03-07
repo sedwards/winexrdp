@@ -16,10 +16,8 @@
 #define BUF_SIZE 1024 
 #define BUF_SIZE2 4096 
 const WCHAR szName[]={'G','l','o','b','a','l','\\','M','y','F','i','l','e','M','a','p','p','i','n','g','O','b','j','e','c','t',0};
-//const WCHAR szMsg[BUF_SIZE2]={'M','e','s','s','a','g','e','f','r','o','m','f','i','r','s','t','p','r','o','c','e','s','s',0};
 WCHAR buf[BUF_SIZE2]={'d','s','t',0};
 const WCHAR pbData[BUF_SIZE2]={'M','e','s','s','a','g','e','f','r','o','m','f','i','r','s','t','p','r','o','c','e','s','s',0};
-//const WCHAR pbData[BUF_SIZE2]={'M','e','s','s','a','g','e','f','r','o','m','f','i','r','s','t','p','r','o','c','e','s','s',0};
 //char szName[]={"Global\\MyFileMappingObject"};
 const char szMsg[]={"Message from first process."};
 
@@ -74,6 +72,25 @@ static int mywprintf(const WCHAR *format, ...)
     return res ? nOut : 0;
 }
 
+static int mywprintfA(const char *format, ...)
+{
+    static char output_bufA[65536];
+    va_list             parms;
+    DWORD               nOut;
+    BOOL                res = FALSE;
+    HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    va_start(parms, format);
+    vsnprintfW(output_bufA, ARRAY_SIZE(output_bufA), format, parms);
+    va_end(parms);
+
+    printf("%s\n",output_bufA);
+
+    return res ? nOut : 0;
+}
+
+
+
 int MyReadConsoleInput(VOID);
 
 void main()
@@ -118,14 +135,15 @@ void main()
 //#if 0   
     /* This works */
     //mywprintf(buf);
-    MyCopyMemory(buf, pbData, COPY_SIZE*sizeof(WCHAR), BUFFER_SIZE*sizeof(WCHAR));
+    //MyCopyMemory(buf, pbData, COPY_SIZE*sizeof(WCHAR), BUFFER_SIZE*sizeof(WCHAR));
     MyCopyMemory(pBuf, pbData, COPY_SIZE*sizeof(WCHAR), BUFFER_SIZE*sizeof(WCHAR));
     //mywprintf(buf);
     mywprintf(pBuf);
 //#endif
 
-    for(;;) {
+    for(;;) {  
       MyReadConsoleInput();
+      mywprintf(pBuf);
     }
    //getch();
    //MyReadConsoleInput();

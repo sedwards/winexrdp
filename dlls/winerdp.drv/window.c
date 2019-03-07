@@ -1698,8 +1698,9 @@ LRESULT CDECL RDP_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 }
 
 void (WINAPI *pTermsvCreateWindow)(UINT width, UINT height);
-void rdpdrv_send_msg_pipe(char *msg);
-void rdpdrv_msg_pipe();
+//void rdpdrv_send_msg_pipe(char *msg);
+//void rdpdrv_msg_pipe();
+void rdpdrv_read_shm_msg();
 
 /***********************************************************************
  *           RDP_create_desktop
@@ -1709,8 +1710,8 @@ BOOL CDECL RDP_create_desktop( UINT width, UINT height )
     BOOL ret = FALSE;
     HMODULE termsv_mod = NULL;
 
-    rdpdrv_send_msg_pipe("rdpsend_msg_pipe: from RDP_create_desktop");
-    //rdpdrv_msg_pipe();
+    //rdpdrv_send_msg_pipe("rdpsend_msg_pipe: from RDP_create_desktop");
+    rdpdrv_read_shm_msg();
 
     FIXME("Calling RDP_create_desktop\n");
     {
@@ -1725,6 +1726,9 @@ BOOL CDECL RDP_create_desktop( UINT width, UINT height )
 
     desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
                                                        (LONG_PTR)desktop_wndproc_wrapper );
+
+
+    //pTermsvCreateWindow(pbuf, 1280x960);
 
     return ret;
 

@@ -8,9 +8,12 @@
 #define COPY_SIZE 1024
 #define BUF_SIZE2 4096 
 
+const WCHAR szRdpServerName[]={'G','l','o','b','a','l','\\','R','D','P','s','e','r','v','e','r','0',0};
+
 //const WCHAR szName[]={'G','l','o','b','a','l','\\','M','y','F','i','l','e','M','a','p','p','i','n','g','O','b','j','e','c','t',0};
+const WCHAR szName[]={'G','l','o','b','a','l','\\','M','y','F','i','l','e','M','a','p','p','i','n','g','O','b','j','e','c','t',0};
 const WCHAR pbData[BUF_SIZE2]={'2','e','s','s','a','g','e','f','r','o','m','f','i','r','s','t','p','r','o','c','e','s','s',0};
-char szName[]={"Global\\MyFileMappingObject"};
+//char szName[]={"Global\\MyFileMappingObject"};
 
 static int mywprintf(const WCHAR *format, ...)
 {
@@ -58,7 +61,7 @@ int main()
    HANDLE hMapFile;
    LPCWSTR pBuf;
 
-   hMapFile = OpenFileMappingA(
+   hMapFile = OpenFileMappingW(
                    FILE_MAP_ALL_ACCESS,   // read/write access
                    FALSE,                 // do not inherit the name
                    szName);               // name of mapping object

@@ -1,7 +1,8 @@
+
 #include <windows.h> 
 #include <stdio.h>
-//#include <conio.h>
-//#include <tchar.h>
+
+#if 0
 
 #define BUFSIZE 512
  
@@ -109,7 +110,7 @@ void pipe_thread(void)
     if ( ! fSuccess)
     {
       printf( ("ReadFile from pipe failed. GLE=%d\n"), GetLastError() );
-      ExitProcess(GetLastError()); 
+      //ExitProcess(GetLastError()); 
       //return -1;
     }
 
@@ -221,4 +222,90 @@ void rdpdrv_msg_pipe()
     }
 }
 #endif
+#endif
+
+
+static int rdpdrv_printfA(const char *format, ...)
+{
+    static char output_bufA[65536];
+    va_list             parms;
+    DWORD               nOut;
+    BOOL                res = FALSE;
+    HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    va_start(parms, format);
+    vsnprintfW(output_bufA, ARRAY_SIZE(output_bufA), format, parms);
+    va_end(parms);
+
+    printf("%s\n",output_bufA);
+
+    return res ? nOut : 0;
+}
+
+
+#include "wine/debug.h"
+
+#define BUF_SIZE 4096 
+
+WINE_DEFAULT_DEBUG_CHANNEL(rdp);
+
+const WCHAR szName[]={'G','l','o','b','a','l','\\','M','y','F','i','l','e','M','a','p','p','i','n','g','O','b','j','e','c','t',0};
+
+HANDLE hMapFile;
+LPCSTR pBuf;
+
+void pipe_thread(void)
+{
+//   HANDLE hMapFile;
+//   LPCWSTR pBuf;
+  
+
+   hMapFile = CreateFileMappingW(
+                 INVALID_HANDLE_VALUE,    // use paging file
+                 NULL,                    // default security
+                 PAGE_READWRITE,          // read/write access
+                 0,                       // maximum object size (high-order DWORD)
+                 BUF_SIZE,                // maximum object size (low-order DWORD)
+                 szName);                 // name of mapping object
+
+   if (hMapFile == NULL)
+   {
+      FIXME("RDPdrv - Could not create file mapping object (%d).\n",
+             GetLastError());
+   }
+/*
+   pBuf = (LPSTR) MapViewOfFile(hMapFile,   // handle to map object
+                        FILE_MAP_ALL_ACCESS, // read/write permission
+                        0,
+                        0,
+                        BUF_SIZE);
+
+   if (pBuf == NULL)
+   {
+      FIXME("RDPdrv - Could not map view of file (%d).\n", GetLastError());
+      CloseHandle(hMapFile);
+   }
+ */
+}
+
+void rdpdrv_read_shm_msg(void)
+{
+   rdpdrv_printfA("rdpdrv_read_shm_msg: Attempting to read message sent by Termsv.exe.so\n");
+
+   pBuf = (LPSTR) MapViewOfFile(hMapFile,   // handle to map object
+                        FILE_MAP_ALL_ACCESS, // read/write permission
+                        0,
+                        0,
+                        BUF_SIZE);
+
+   if (pBuf == NULL)
+   {
+      FIXME("RDPdrv - Could not map view of file (%d).\n", GetLastError());
+      CloseHandle(hMapFile);
+   }
+
+    mywprintfA("rdpdrv------------read:\n");
+    mywprintfA(pBuf);
+    mywprintfA("rdpdrv-------- From shared memory\n");
+}
 

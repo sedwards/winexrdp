@@ -362,7 +362,6 @@ typedef wchar_t         WCHAR,      *PWCHAR;
 typedef unsigned short  WCHAR,      *PWCHAR;
 #endif
 
-THREAD_RV THREAD_CC wine_named_pipe(VOID);
 
 /*****************************************************************************/
 //int
@@ -613,7 +612,6 @@ int wmain(int argc, WCHAR *argv[])
 // sedwards
     g_threadid = tc_get_threadid();
     g_listen = xrdp_listen_create();
-    //tc_thread_create(wine_named_pipe, 0);
     g_signal_user_interrupt(xrdp_shutdown); /* SIGINT */
     g_signal_pipe(pipe_sig); /* SIGPIPE */
     g_signal_terminate(xrdp_shutdown); /* SIGTERM */
