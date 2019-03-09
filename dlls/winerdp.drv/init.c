@@ -65,22 +65,27 @@ typedef struct
 } RDP_PDEVICE;
 
 static const struct gdi_dc_funcs android_drv_funcs;
-int pipe_thread();
+int pipe_thread(void);
+int rdp_shm_channel;
+void device_init(void);
 
 int delay_load_rdpdrv(void)
 {
+    rdp_shm_channel = FALSE;
     if(!device_init_done)
     {
        if(!pipe_thread())
        {
-           FIXME("winerdp driver - termsrv has not Opened file for communication yet\n");
+           FIXME("delay_load_rdpdrv: termsrv has not Opened file for communication yet\n");
            return 0;
        } else {
+           FIXME("delay_load_rdpdrv: device_init_done starting now\n");
            device_init();
-           FIXME("RDP_create_desktop no device_init_done starting now\n");
+           rdp_shm_channel = TRUE;
 	   return 1;
        }
     }
+    return 0;
 }
 
 /******************************************************************************
@@ -125,7 +130,9 @@ void set_screen_dpi( DWORD dpi )
  */
 static void fetch_display_metrics(void)
 {
-    FIXME("fetch_display_metrics\n");
+    FIXME("fetch_display_metrics------------------\n");
+rdpdrv_read_shm_msg();
+
     SERVER_START_REQ( get_window_rectangles )
     {
         req->handle = wine_server_user_handle( GetDesktopWindow() );
@@ -139,7 +146,7 @@ static void fetch_display_metrics(void)
     SERVER_END_REQ;
 
     init_monitors( screen_width, screen_height );
-    FIXME( "fetch_display_metrics - screen %ux%u\n", screen_width, screen_height );
+    FIXME( "fetch_display_metrics ------------ screen %ux%u\n", screen_width, screen_height );
 }
 
 
@@ -234,7 +241,7 @@ static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
  */
 static BOOL RDP_DeleteDC( PHYSDEV dev )
 {
-    //FIXME("RDP_DeleteDC\n");
+    FIXME("RDP_DeleteDC\n");
     HeapFree( GetProcessHeap(), 0, dev );
     return TRUE;
 }
@@ -481,9 +488,10 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        FIXME("RDPDrv entry point\n");
         if(!delay_load_rdpdrv())
 	{
-             FIXME("termsrv not loaded, delaying dll initialization");
+             FIXME("winerdp not loaded, delaying dll initialization\n");
 	     return FALSE;
 	}
         DisableThreadLibraryCalls( inst );

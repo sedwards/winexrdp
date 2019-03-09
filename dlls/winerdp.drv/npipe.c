@@ -300,7 +300,7 @@ extern int device_init_done;
 
 int rdpdrv_read_shm_msg(void)
 {
-   rdpdrv_printfA("rdpdrv_read_shm_msg: Attempting to read message sent by Termsv.exe.so\n");
+//   rdpdrv_printfA("rdpdrv_read_shm_msg: Attempting to read message sent by Termsv.exe.so\n");
 
    pBuf = (LPSTR) MapViewOfFile(hMapFile,   // handle to map object
                         FILE_MAP_ALL_ACCESS, // read/write permission
@@ -316,9 +316,9 @@ int rdpdrv_read_shm_msg(void)
       //CloseHandle(hMapFile);
    }
 
-    rdpdrv_printfA("rdpdrv------------read:\n");
+    rdpdrv_printfA("rdpdrv reading message:\n");
     rdpdrv_printfA(pBuf);
-    rdpdrv_printfA("rdpdrv-------- From shared memory\n");
+//    rdpdrv_printfA("rdpdrv-------- From shared memory\n");
     //CloseHandle(hMapFile);
     return 1;
 }

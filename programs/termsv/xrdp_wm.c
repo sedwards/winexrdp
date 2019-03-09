@@ -798,7 +798,7 @@ xrdp_wm_init(struct xrdp_wm *self)
         //g_writeln("   xrdp_wm_init: no autologin / auto run detected, draw login window");
         //xrdp_login_wnd_create(self);
         //termsv_msg_pipe("termsv_send_msg_pipe: from RDP_create_desktop");
-        termsv_shm_msg("termsv_shm_msg: Message from RDP_create_desktop");
+        termsv_shm_msg("termsv_shm_msg: This Message from termsv.exe.so process");
 	
 	//TermsvCreateWindow(self);
 	//TermsvCreateChildWindow(self);
@@ -810,15 +810,24 @@ xrdp_wm_init(struct xrdp_wm *self)
         {
 	    printf("winedrp.dll was loaded\n");
 	    int width=1280, height=960;
-            BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
+            //BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
+	    BOOL (WINAPI *pDllMain)(int, int, int);
+            pDllMain  = (void *)GetProcAddress( driver, "DllMain" );
 
-            create_desktop_func = (void *)GetProcAddress( driver, "wine_create_desktop" );
-            if (create_desktop_func)
+            if (pDllMain)
             {
                 printf("Attempting to call wine_create_desktop in the RDP driver\n");
-                create_desktop_func( width, height );
+	        pDllMain(NULL, DLL_PROCESS_ATTACH, NULL);
+                //create_desktop_func( width, height );
             }
-            FreeLibrary( driver );
+
+            //create_desktop_func = (void *)GetProcAddress( driver, "wine_create_desktop" );
+            //if (create_desktop_func)
+            //{
+            //    printf("Attempting to call wine_create_desktop in the RDP driver\n");
+            //    create_desktop_func( width, height );
+            //}
+            //FreeLibrary( driver );
         }
 	TermsvCreateWindow(self);
 

@@ -1726,15 +1726,18 @@ BOOL CDECL RDP_create_desktop( UINT width, UINT height )
     FIXME("Calling RDP_create_desktop\n");
     BOOL ret = FALSE;
     HMODULE termsv_mod = NULL;
-    int msg_status = 0;
+    //int msg_status = 0;
+    int status;
 
-    if(!delay_load_rdpdrv())
+    status = delay_load_rdpdrv();
+    if(status==0)
     {
        FIXME("termsrv not loaded, delaying dll initialization");
        return FALSE;
     }
 
-    msg_status = rdpdrv_read_shm_msg();
+        FIXME("RDP_create_desktop going to try to read the message\n");
+    rdpdrv_read_shm_msg();
 //    if(msg_status==1)
 //	device_init();
 
@@ -1745,6 +1748,7 @@ BOOL CDECL RDP_create_desktop( UINT width, UINT height )
 
 //       rdpdrv_read_shm_msg();
     
+       FIXME("RDP_create_desktop going to try to get handle to termsv.exe.so\n");
        termsv_mod = GetModuleHandleA(NULL);
        if (termsv_mod == NULL)
           FIXME("Unable to get a handle to termsrv.exe.so process\n");
@@ -1782,8 +1786,9 @@ BOOL CDECL RDP_create_desktop( UINT width, UINT height )
 BOOL CDECL RDP_CreateDesktopWindow(HWND hwnd)
 {
     unsigned int width, height;
+    rdpdrv_read_shm_msg();
 
-    TRACE("%p\n", hwnd);
+    FIXME("RDP_CreateDesktopWindow %p\n", hwnd);
 
     /* retrieve the real size of the desktop */
     SERVER_START_REQ(get_window_rectangles)

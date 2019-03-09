@@ -405,9 +405,9 @@ void MyCopyMemory(char *buf, char *pbData, SIZE_T cbData, SIZE_T bufsize)
 void termsv_shm_msg(char *msg)
 {
     MyCopyMemory(pBuf, msg, COPY_SIZE*sizeof(char), BUFFER_SIZE*sizeof(char));
-    mywprintfA("------------wrote:\n");
+    mywprintfA("Writing:\n");
     mywprintfA(pBuf);
-    mywprintfA("-------- To shared memory\n");
+//    mywprintfA("-------- To shared memory\n");
 }
 
 
