@@ -30,7 +30,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/gdi_driver.h"
-#include "rdp_native.h"
+//#include "rdp_native.h"
 
 /**************************************************************************
  * OpenGL driver
@@ -74,21 +74,34 @@ enum rdp_window_messages
     WM_RDP_REFRESH = 0x80001000,
 };
 
-extern void init_gralloc( const struct hw_module_t *module ) DECLSPEC_HIDDEN;
-extern HWND get_capture_window(void) DECLSPEC_HIDDEN;
-extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
-extern void set_screen_dpi( DWORD dpi ) DECLSPEC_HIDDEN;
-extern void update_keyboard_lock_state( WORD vkey, UINT state ) DECLSPEC_HIDDEN;
+struct macdrv_win_data
+{
+    HWND                hwnd;                   /* hwnd that this private data belongs to */
+//    macdrv_window       cocoa_window;
+//    macdrv_view         cocoa_view;
+//    macdrv_view         client_cocoa_view;
+    RECT                window_rect;            /* USER window rectangle relative to parent */
+    RECT                whole_rect;             /* Mac window rectangle for the whole window relative to parent */
+    RECT                client_rect;            /* client area relative to parent */
+//    struct window_surface *unminimized_surface;
+};
+
+
+//extern void init_gralloc( const struct hw_module_t *module ) DECLSPEC_HIDDEN;
+//extern HWND get_capture_window(void) DECLSPEC_HIDDEN;
+//extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
+//extern void set_screen_dpi( DWORD dpi ) DECLSPEC_HIDDEN;
+//extern void update_keyboard_lock_state( WORD vkey, UINT state ) DECLSPEC_HIDDEN;
 
 /* JNI entry points */
-extern void desktop_changed( PVOID *env, PVOID obj, int width, int height ) DECLSPEC_HIDDEN;
-extern void config_changed( PVOID *env, PVOID obj, int dpi ) DECLSPEC_HIDDEN;
-extern void surface_changed( PVOID *env, PVOID obj, int win, PVOID surface,
-                             BOOL client ) DECLSPEC_HIDDEN;
-extern BOOL motion_event( PVOID *env, PVOID obj, int win, int action,
-                              int x, int y, int state, int vscroll ) DECLSPEC_HIDDEN;
-extern BOOL keyboard_event( PVOID *env, PVOID obj, int win, int action,
-                                int keycode, int state ) DECLSPEC_HIDDEN;
+//extern void desktop_changed( PVOID *env, PVOID obj, int width, int height ) DECLSPEC_HIDDEN;
+//extern void config_changed( PVOID *env, PVOID obj, int dpi ) DECLSPEC_HIDDEN;
+//extern void surface_changed( PVOID *env, PVOID obj, int win, PVOID surface,
+//                             BOOL client ) DECLSPEC_HIDDEN;
+//extern BOOL motion_event( PVOID *env, PVOID obj, int win, int action,
+//                              int x, int y, int state, int vscroll ) DECLSPEC_HIDDEN;
+//extern BOOL keyboard_event( PVOID *env, PVOID obj, int win, int action,
+//                                int keycode, int state ) DECLSPEC_HIDDEN;
 
 enum event_type
 {

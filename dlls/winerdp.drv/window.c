@@ -185,7 +185,7 @@ static void release_win_data( struct rdp_win_data *data )
     if (data) LeaveCriticalSection( &win_data_section );
 }
 
-
+#if 0
 /***********************************************************************
  *           get_ioctl_window
  */
@@ -211,6 +211,7 @@ struct java_event
 
 //static struct list event_queue = LIST_INIT( event_queue );
 static struct java_event *current_event;
+#endif
 static int event_pipe[2];
 static DWORD desktop_tid;
 
@@ -1237,13 +1238,13 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
     switch (msg)
     {
     case WM_PARENTNOTIFY:
-        if (LOWORD(wp) == WM_DESTROY) destroy_ioctl_window( (HWND)lp, FALSE );
+    //    if (LOWORD(wp) == WM_DESTROY) destroy_ioctl_window( (HWND)lp, FALSE );
         break;
     }
     return desktop_orig_wndproc( hwnd, msg, wp, lp );
 }
 
-
+#if 0
 /***********************************************************************
  *           RDP_MsgWaitForMultipleObjectsEx
  */
@@ -1259,6 +1260,7 @@ DWORD CDECL RDP_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
                                      timeout, flags & MWMO_ALERTABLE );
 }
+#endif
 
 /**********************************************************************
  *           RDP_CreateWindow

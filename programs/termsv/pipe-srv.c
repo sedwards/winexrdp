@@ -361,11 +361,12 @@ static int mywprintfA(const char *format, ...)
 }
 
 
+HANDLE hMapFile;
+
 THREAD_RV THREAD_CC wine_rdp_shm_thread(VOID)
 {
    printf("printf----------------------Termsv: Entered Shared Memory Thread---------------------------------\n");
    g_writeln("g_writeln----------------------Termsv: Entered Shared Memory Thread---------------------------------\n");
-   HANDLE hMapFile;
 //   LPCWSTR pBuf;
 
    hMapFile = CreateFileMappingW(
@@ -383,6 +384,7 @@ THREAD_RV THREAD_CC wine_rdp_shm_thread(VOID)
       return 1;
    }
 
+#if 0   
    pBuf = (LPSTR) MapViewOfFile(hMapFile,   // handle to map object
                         FILE_MAP_ALL_ACCESS, // read/write permission
                         0,
@@ -395,6 +397,7 @@ THREAD_RV THREAD_CC wine_rdp_shm_thread(VOID)
       CloseHandle(hMapFile);
       return 1;
    }
+#endif
 }
 
 void MyCopyMemory(char *buf, char *pbData, SIZE_T cbData, SIZE_T bufsize)
@@ -404,20 +407,21 @@ void MyCopyMemory(char *buf, char *pbData, SIZE_T cbData, SIZE_T bufsize)
 
 void termsv_shm_msg(char *msg)
 {
-    MyCopyMemory(pBuf, msg, COPY_SIZE*sizeof(char), BUFFER_SIZE*sizeof(char));
-    mywprintfA("Writing:\n");
-    mywprintfA(pBuf);
-//    mywprintfA("-------- To shared memory\n");
+   pBuf = (LPSTR) MapViewOfFile(hMapFile,   // handle to map object
+                        FILE_MAP_ALL_ACCESS, // read/write permission
+                        0,
+                        0,
+                        BUF_SIZE);
+
+   if (pBuf == NULL)
+   {
+      fprintf("Termsv: Could not map view of file (%d).\n", GetLastError());
+      CloseHandle(hMapFile);
+      return 1;
+   }
+
+   MyCopyMemory(pBuf, msg, COPY_SIZE*sizeof(char), BUFFER_SIZE*sizeof(char));
+   mywprintfA("Writing:\n");
+   mywprintfA(pBuf);
 }
-
-
-//    MyCopyMemory(pBuf, pbData, COPY_SIZE*sizeof(WCHAR), BUFFER_SIZE*sizeof(WCHAR));
-
-//    for(;;) {
-//    }
-   //getch();
-   //MyReadConsoleInput();
-//   UnmapViewOfFile(pBuf);
-
-//   CloseHandle(hMapFile);
 

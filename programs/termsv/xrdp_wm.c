@@ -40,6 +40,7 @@ xrdp_wm_create(struct xrdp_process *owner,
     struct xrdp_wm *self = (struct xrdp_wm *)NULL;
     char event_name[256];
     int pid = 0;
+    char text[256];
 
     /* initialize (zero out) local variables: */
     g_memset(event_name, 0, sizeof(char) * 256);
@@ -54,7 +55,7 @@ xrdp_wm_create(struct xrdp_process *owner,
     self->pro_layer = owner;
     self->session = owner->session;
     pid = g_getpid();
-    g_snprintf(event_name, 255, "xrdp_%8.8x_wm_login_mode_event_%8.8x",
+    g_snprintf(event_name, 255, "xrdp_%8.8x_wm_login_mode_event_%8.8x\n\n\n\n",
                pid, owner->session_id);
     log_message(LOG_LEVEL_DEBUG, "%s", event_name);
     self->login_mode_event = g_create_wait_obj(event_name);
@@ -67,8 +68,18 @@ xrdp_wm_create(struct xrdp_process *owner,
     /* this will use built in keymap or load from file */
     get_keymaps(self->session->client_info->keylayout, &(self->keymap));
     xrdp_wm_set_login_mode(self, 0);
+    printf("Trying to get surface information\n");
     self->target_surface = self->screen;
+    g_snprintf(text, 255, "%d", self->target_surface);
+    printf("surface %s\n,", text);
+
     self->current_surface_index = 0xffff; /* screen */
+    g_snprintf(text, 255, "%d", self->current_surface_index);
+    printf("surface index %s\n,", text);
+
+
+    g_snprintf(text, 255, "%d", self);
+    printf("Self %s\n,", text);
 
     /* to store configuration from xrdp.ini */
     self->xrdp_config = g_new0(struct xrdp_config, 1);

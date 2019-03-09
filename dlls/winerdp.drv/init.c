@@ -37,6 +37,8 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
+#include "xrdp_types.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(rdp);
 
 extern MONITORINFOEXW default_monitor DECLSPEC_HIDDEN;
@@ -64,7 +66,7 @@ typedef struct
     struct gdi_physdev dev;
 } RDP_PDEVICE;
 
-static const struct gdi_dc_funcs android_drv_funcs;
+static const struct gdi_dc_funcs rdp_drv_funcs;
 int pipe_thread(void);
 int rdp_shm_channel;
 void device_init(void);
@@ -125,13 +127,23 @@ void set_screen_dpi( DWORD dpi )
     }
 }
 
+extern struct xrdp_wm self;
+
 /**********************************************************************
  *	     fetch_display_metrics
  */
 static void fetch_display_metrics(void)
 {
+    char text[256];
     FIXME("fetch_display_metrics------------------\n");
-rdpdrv_read_shm_msg();
+    rdpdrv_read_shm_msg();
+
+//    g_snprintf(text, 255, "%d", self->target_surface);
+//    printf("surface %s\n,", text);
+//    g_snprintf(text, 255, "%d", self->current_surface_index);
+//    printf("surface index %s\n,", text);
+//    g_snprintf(text, 255, "%d", self);
+//    printf("Self %s\n,", text);
 
     SERVER_START_REQ( get_window_rectangles )
     {
@@ -164,16 +176,16 @@ void device_init(void)
 
 
 /******************************************************************************
- *           create_android_physdev
+ *           create_rdp_physdev
  */
-static RDP_PDEVICE *create_android_physdev(void)
+static RDP_PDEVICE *create_rdp_physdev(void)
 {
-    FIXME("create_android_physdev\n");
+    FIXME("create_rdp_physdev\n");
     RDP_PDEVICE *physdev;
 
     if (!device_init_done) 
     {
-	FIXME("create_android_physdev no device_init_done\n");
+	FIXME("create_rdp_physdev no device_init_done\n");
 	    device_init();
     }
 
@@ -195,16 +207,14 @@ static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
        return FALSE;
     }
 
-#if 0
-    RDP_PDEVICE *physdev = create_android_physdev();
+    RDP_PDEVICE *physdev = create_rdp_physdev();
 
     if (!physdev){
 	FIXME("RDP_CreateDC - failed\n");
 	    return FALSE;
     }
 
-    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
-#endif
+    push_dc_driver( pdev, &physdev->dev, &rdp_drv_funcs );
     return TRUE;
 }
 
@@ -222,16 +232,14 @@ static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
        return FALSE;
     }
 
-#if 0
-    RDP_PDEVICE *physdev = create_android_physdev();
+    RDP_PDEVICE *physdev = create_rdp_physdev();
 
     if (!physdev){ 
 	FIXME("RDP_CreateCompatibleDC - failed\n");
 	    return FALSE;
     }
 
-    push_dc_driver( pdev, &physdev->dev, &android_drv_funcs );
-#endif
+    push_dc_driver( pdev, &physdev->dev, &rdp_drv_funcs );
     return TRUE;
 }
 
@@ -294,10 +302,10 @@ BOOL CDECL RDP_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, 
  */
 BOOL CDECL RDP_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
-	FIXME("RDP_EnumDisplaySettingsEx\n");
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','A','n','d','r','o','i','d',' ','d','r','i','v','e','r',0 };
 
+    FIXME("RDP_EnumDisplaySettingsEx\n");
     devmode->dmSize = offsetof( DEVMODEW, dmICMMethod );
     devmode->dmSpecVersion = DM_SPECVERSION;
     devmode->dmDriverVersion = DM_SPECVERSION;
@@ -328,7 +336,7 @@ BOOL CDECL RDP_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode,
     return FALSE;
 }
 
-static const struct gdi_dc_funcs android_drv_funcs =
+static const struct gdi_dc_funcs rdp_drv_funcs =
 {
     NULL,                               /* pAbortDoc */
     NULL,                               /* pAbortPath */
@@ -469,10 +477,10 @@ const struct gdi_dc_funcs * CDECL RDP_get_gdi_driver( unsigned int version )
 {
     if (version != WINE_GDI_DRIVER_VERSION)
     {
-        ERR( "version mismatch, gdi32 wants %u but wineandroid has %u\n", version, WINE_GDI_DRIVER_VERSION );
+        ERR( "version mismatch, gdi32 wants %u but winerdp has %u\n", version, WINE_GDI_DRIVER_VERSION );
         return NULL;
     }
-    return &android_drv_funcs;
+    return &rdp_drv_funcs;
 }
 
 static BOOL process_attach(void)

@@ -17,7 +17,7 @@
 @ cdecl CreateDesktopWindow(long) RDP_CreateDesktopWindow
 @ cdecl CreateWindow(long) RDP_CreateWindow
 @ cdecl DestroyWindow(long) RDP_DestroyWindow
-@ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) RDP_MsgWaitForMultipleObjectsEx
+;@ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) RDP_MsgWaitForMultipleObjectsEx
 @ cdecl SetCapture(long long) RDP_SetCapture
 @ cdecl SetLayeredWindowAttributes(long long long long) RDP_SetLayeredWindowAttributes
 @ cdecl SetParent(long long long) RDP_SetParent
