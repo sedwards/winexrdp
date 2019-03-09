@@ -39,6 +39,7 @@
 #endif
 
 #include "xrdp_types.h"
+#include "rdp.h"
 
 #define OEMRESOURCE
 #include "windef.h"
@@ -53,7 +54,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(rdp);
 
 /* private window data */
-struct android_win_data
+struct rdp_win_data
 {
     HWND           hwnd;           /* hwnd that this private data belongs to */
     HWND           parent;         /* parent hwnd for child windows */
@@ -75,7 +76,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION win_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static struct android_win_data *win_data_context[32768];
+static struct rdp_win_data *win_data_context[32768];
 
 static inline int context_idx( HWND hwnd )
 {
@@ -123,10 +124,10 @@ static UINT get_win_monitor_dpi( HWND hwnd )
 /***********************************************************************
  *           alloc_win_data
  */
-static struct android_win_data *alloc_win_data( HWND hwnd )
+static struct rdp_win_data *alloc_win_data( HWND hwnd )
 {
 #if 0
-    struct android_win_data *data;
+    struct rdp_win_data *data;
 
     if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
@@ -144,7 +145,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
 /***********************************************************************
  *           free_win_data
  */
-static void free_win_data( struct android_win_data *data )
+static void free_win_data( struct rdp_win_data *data )
 {
 #if 0
     win_data_context[context_idx( data->hwnd )] = NULL;
@@ -160,10 +161,10 @@ static void free_win_data( struct android_win_data *data )
  *
  * Lock and return the data structure associated with a window.
  */
-static struct android_win_data *get_win_data( HWND hwnd )
+static struct rdp_win_data *get_win_data( HWND hwnd )
 {
 #if 0
-    struct android_win_data *data;
+    struct rdp_win_data *data;
 
     if (!hwnd) return NULL;
     EnterCriticalSection( &win_data_section );
@@ -179,7 +180,7 @@ static struct android_win_data *get_win_data( HWND hwnd )
  *
  * Release the data returned by get_win_data.
  */
-static void release_win_data( struct android_win_data *data )
+static void release_win_data( struct rdp_win_data *data )
 {
     if (data) LeaveCriticalSection( &win_data_section );
 }
@@ -191,7 +192,7 @@ static void release_win_data( struct android_win_data *data )
 static struct ANativeWindow *get_ioctl_window( HWND hwnd )
 {
     struct ANativeWindow *ret;
-    struct android_win_data *data = get_win_data( hwnd );
+    struct rdp_win_data *data = get_win_data( hwnd );
 
     if (!data || !data->window) return NULL;
     ret = grab_ioctl_window( data->window );
@@ -223,7 +224,7 @@ int send_event( const PLONG *data )
 
     if ((res = write( event_pipe[1], data, sizeof(*data) )) != sizeof(*data))
     {
-  //      p__android_log_print( ANDROID_LOG_ERROR, "wine", "failed to send event" );
+  //      p__rdp_log_print( RDP_LOG_ERROR, "wine", "failed to send event" );
         return -1;
     }
     return 0;
@@ -243,7 +244,7 @@ void desktop_changed( PVOID *env, PVOID obj, int width, int height )
     data.type = DESKTOP_CHANGED;
     data.desktop.width = width;
     data.desktop.height = height;
-//    p__android_log_print( ANDROID_LOG_INFO, "wine", "desktop_changed: %ux%u", width, height );
+//    p__rdp_log_print( RDP_LOG_INFO, "wine", "desktop_changed: %ux%u", width, height );
     send_event( &data );
 #endif
 }
@@ -263,7 +264,7 @@ void config_changed( PVOID *env, PVOID obj, int dpi )
 //    memset( &data, 0, sizeof(data) );
 //    data.type = CONFIG_CHANGED;
 //    data.cfg.dpi = dpi;
-//    p__android_log_print( ANDROID_LOG_INFO, "wine", "config_changed: %u dpi", dpi );
+//    p__rdp_log_print( RDP_LOG_INFO, "wine", "config_changed: %u dpi", dpi );
 //    send_event( &data );
 }
 
@@ -291,7 +292,7 @@ void surface_changed( PVOID *env, PVOID obj, int win, PVOID surface, BOOL client
         data.surface.window = win;
         data.surface.width = width;
         data.surface.height = height;
-        p__android_log_print( ANDROID_LOG_INFO, "wine", "surface_changed: %p %s %ux%u",
+        p__rdp_log_print( RDP_LOG_INFO, "wine", "surface_changed: %p %s %ux%u",
                               data.surface.hwnd, client ? "client" : "whole", width, height );
     }
     data.type = SURFACE_CHANGED;
@@ -379,6 +380,7 @@ BOOL motion_event( PVOID *env, PVOID obj, int win, int action, int x, int y, int
     return 0;
 }
 
+#if 0
 /***********************************************************************
  *           init_event_queue
  */
@@ -433,7 +435,7 @@ static void pull_events(void)
     }
     HeapFree( GetProcessHeap(), 0, event );
 }
-
+#endif
 
 /***********************************************************************
  *           process_events
@@ -592,7 +594,7 @@ static int wait_events( int timeout )
 
 /* Window surface support */
 
-struct android_window_surface
+struct rdp_window_surface
 {
     //struct window_surface header;
     HWND                  hwnd;
@@ -608,9 +610,9 @@ struct android_window_surface
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
-static struct android_window_surface *get_android_surface( struct window_surface *surface )
+static struct rdp_window_surface *get_rdp_surface( struct window_surface *surface )
 {
-    return (struct android_window_surface *)surface;
+    return (struct rdp_window_surface *)surface;
 }
 
 static inline void reset_bounds( RECT *bounds )
@@ -671,36 +673,36 @@ static void apply_line_region( DWORD *dst, int width, int x, int y, const RECT *
 }
 
 /***********************************************************************
- *           android_surface_lock
+ *           rdp_surface_lock
  */
-static void android_surface_lock( struct window_surface *window_surface )
+static void rdp_surface_lock( struct window_surface *window_surface )
 {
 #if 0
-    struct android_window_surface *surface = get_android_surface( window_surface );
+    struct rdp_window_surface *surface = get_rdp_surface( window_surface );
 
     EnterCriticalSection( &surface->crit );
 #endif
 }
 
 /***********************************************************************
- *           android_surface_unlock
+ *           rdp_surface_unlock
  */
-static void android_surface_unlock( struct window_surface *window_surface )
+static void rdp_surface_unlock( struct window_surface *window_surface )
 {
 #if 0
-    struct android_window_surface *surface = get_android_surface( window_surface );
+    struct rdp_window_surface *surface = get_rdp_surface( window_surface );
 
     LeaveCriticalSection( &surface->crit );
 #endif
 }
 
 /***********************************************************************
- *           android_surface_get_bitmap_info
+ *           rdp_surface_get_bitmap_info
  */
-static void *android_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
+static void *rdp_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
 {
 #if 0
-    struct android_window_surface *surface = get_android_surface( window_surface );
+    struct rdp_window_surface *surface = get_rdp_surface( window_surface );
 
     memcpy( info, &surface->info, get_dib_info_size( &surface->info, DIB_RGB_COLORS ));
     return surface->bits;
@@ -708,22 +710,22 @@ static void *android_surface_get_bitmap_info( struct window_surface *window_surf
 }
 
 /***********************************************************************
- *           android_surface_get_bounds
+ *           rdp_surface_get_bounds
  */
-static RECT *android_surface_get_bounds( struct window_surface *window_surface )
+static RECT *rdp_surface_get_bounds( struct window_surface *window_surface )
 {
-    struct android_window_surface *surface = get_android_surface( window_surface );
+    struct rdp_window_surface *surface = get_rdp_surface( window_surface );
 
     return &surface->bounds;
 }
 
 /***********************************************************************
- *           android_surface_set_region
+ *           rdp_surface_set_region
  */
-static void android_surface_set_region( struct window_surface *window_surface, HRGN region )
+static void rdp_surface_set_region( struct window_surface *window_surface, HRGN region )
 {
 #if 0
-    struct android_window_surface *surface = get_android_surface( window_surface );
+    struct rdp_window_surface *surface = get_rdp_surface( window_surface );
 
     TRACE( "updating surface %p hwnd %p with %p\n", surface, surface->hwnd, region );
     window_surface->funcs->lock( window_surface );
@@ -743,12 +745,12 @@ static void android_surface_set_region( struct window_surface *window_surface, H
 }
 
 /***********************************************************************
- *           android_surface_flush
+ *           rdp_surface_flush
  */
-static void android_surface_flush( struct window_surface *window_surface )
+static void rdp_surface_flush( struct window_surface *window_surface )
 {
 #if 0
-    	struct android_window_surface *surface = get_android_surface( window_surface );
+    	struct rdp_window_surface *surface = get_rdp_surface( window_surface );
     ANativeWindow_Buffer buffer;
     ARect rc;
     RECT rect;
@@ -827,12 +829,12 @@ static void android_surface_flush( struct window_surface *window_surface )
 }
 
 /***********************************************************************
- *           android_surface_destroy
+ *           rdp_surface_destroy
  */
-static void android_surface_destroy( struct window_surface *window_surface )
+static void rdp_surface_destroy( struct window_surface *window_surface )
 {
 #if 0
-    struct android_window_surface *surface = get_android_surface( window_surface );
+    struct rdp_window_surface *surface = get_rdp_surface( window_surface );
 
     TRACE( "freeing %p bits %p\n", surface, surface->bits );
 
@@ -847,27 +849,27 @@ static void android_surface_destroy( struct window_surface *window_surface )
 }
 
 #if 0
-static const struct window_surface_funcs android_surface_funcs =
+static const struct window_surface_funcs rdp_surface_funcs =
 {
-    android_surface_lock,
-    android_surface_unlock,
-    android_surface_get_bitmap_info,
-    android_surface_get_bounds,
-    android_surface_set_region,
-    android_surface_flush,
-    android_surface_destroy
+    rdp_surface_lock,
+    rdp_surface_unlock,
+    rdp_surface_get_bitmap_info,
+    rdp_surface_get_bounds,
+    rdp_surface_set_region,
+    rdp_surface_flush,
+    rdp_surface_destroy
 };
 #endif
 
 static BOOL is_argb_surface( struct window_surface *surface )
 {
-  //  return surface && surface->funcs == &android_surface_funcs &&
-  //      get_android_surface( surface )->info.bmiHeader.biCompression == BI_RGB;
+  //  return surface && surface->funcs == &rdp_surface_funcs &&
+  //      get_rdp_surface( surface )->info.bmiHeader.biCompression == BI_RGB;
 }
 /***********************************************************************
  *           set_color_key
  */
-static void set_color_key( struct android_window_surface *surface, COLORREF key )
+static void set_color_key( struct rdp_window_surface *surface, COLORREF key )
 {
     if (key == CLR_INVALID)
         surface->color_key = CLR_INVALID;
@@ -889,14 +891,14 @@ static void set_color_key( struct android_window_surface *surface, COLORREF key 
 static void set_surface_region( struct window_surface *window_surface, HRGN win_region )
 {
 #if 0
-    struct android_window_surface *surface = get_android_surface( window_surface );
-    struct android_win_data *win_data;
+    struct rdp_window_surface *surface = get_rdp_surface( window_surface );
+    struct rdp_win_data *win_data;
     HRGN region = win_region;
     RGNDATA *data = NULL;
     DWORD size;
     int offset_x, offset_y;
 
-    if (window_surface->funcs != &android_surface_funcs) return;  /* we may get the null surface */
+    if (window_surface->funcs != &rdp_surface_funcs) return;  /* we may get the null surface */
 
     if (!(win_data = get_win_data( surface->hwnd ))) return;
     offset_x = win_data->window_rect.left - win_data->whole_rect.left;
@@ -940,11 +942,11 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
                                               BYTE alpha, COLORREF color_key, BOOL src_alpha )
 {
 #if 0
-    struct android_window_surface *surface;
+    struct rdp_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
 
     surface = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                         FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
+                         FIELD_OFFSET( struct rdp_window_surface, info.bmiColors[3] ));
     if (!surface) return NULL;
     set_color_info( &surface->info, src_alpha );
     surface->info.bmiHeader.biWidth       = width;
@@ -955,7 +957,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     InitializeCriticalSection( &surface->crit );
     surface->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": surface");
 
-    surface->header.funcs = &android_surface_funcs;
+    surface->header.funcs = &rdp_surface_funcs;
     surface->header.rect  = *rect;
     surface->header.ref   = 1;
     surface->hwnd         = hwnd;
@@ -974,7 +976,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     return &surface->header;
 
 failed:
-    android_surface_destroy( &surface->header );
+    rdp_surface_destroy( &surface->header );
 #endif
     FIXME("Create Surface\n");
     return NULL;
@@ -986,11 +988,11 @@ failed:
 static void set_surface_layered( struct window_surface *window_surface, BYTE alpha, COLORREF color_key )
 {
 #if 0
-    struct android_window_surface *surface = get_android_surface( window_surface );
+    struct rdp_window_surface *surface = get_rdp_surface( window_surface );
     COLORREF prev_key;
     BYTE prev_alpha;
 
-    if (window_surface->funcs != &android_surface_funcs) return;  /* we may get the null surface */
+    if (window_surface->funcs != &rdp_surface_funcs) return;  /* we may get the null surface */
 
     window_surface->funcs->lock( window_surface );
     prev_key = surface->color_key;
@@ -1114,7 +1116,7 @@ failed:
 }
 
 
-enum android_system_cursors
+enum rdp_system_cursors
 {
     TYPE_ARROW = 1000,
     TYPE_CONTEXT_MENU = 1001,
@@ -1142,11 +1144,12 @@ enum android_system_cursors
 struct system_cursors
 {
     WORD id;
-    enum android_system_cursors android_id;
+    enum rdp_system_cursors rdp_id;
 };
 
 static const struct system_cursors user32_cursors[] =
 {
+#if 0
     { OCR_NORMAL,      TYPE_ARROW },
     { OCR_IBEAM,       TYPE_TEXT },
     { OCR_WAIT,        TYPE_WAIT },
@@ -1160,6 +1163,7 @@ static const struct system_cursors user32_cursors[] =
     { OCR_NO,          TYPE_NO_DROP },
     { OCR_HAND,        TYPE_HAND },
     { OCR_HELP,        TYPE_HELP },
+#endif
     { 0 }
 };
 
@@ -1220,7 +1224,7 @@ static int get_cursor_system_id( const ICONINFOEXW *info )
 
     cursors = module_cursors[i].cursors;
     for (i = 0; cursors[i].id; i++)
-        if (cursors[i].id == info->wResID) return cursors[i].android_id;
+        if (cursors[i].id == info->wResID) return cursors[i].rdp_id;
 
     return 0;
 }
@@ -1269,11 +1273,11 @@ BOOL CDECL RDP_CreateWindow( HWND hwnd )
     }
     if (hwnd == GetDesktopWindow())
     {
-        struct android_win_data *data;
+        struct rdp_win_data *data;
 
-        init_event_queue();
+        //init_event_queue();
 	//start_pipe_connection();
-        start_android_device();
+        //start_rdp_device();
         if (!(data = alloc_win_data( hwnd ))) return FALSE;
         release_win_data( data );
     }
@@ -1286,7 +1290,7 @@ BOOL CDECL RDP_CreateWindow( HWND hwnd )
  */
 void CDECL RDP_DestroyWindow( HWND hwnd )
 {
-    struct android_win_data *data;
+    struct rdp_win_data *data;
 
     if (!(data = get_win_data( hwnd ))) return;
 
@@ -1302,11 +1306,11 @@ void CDECL RDP_DestroyWindow( HWND hwnd )
  *
  * Create a data window structure for an existing window.
  */
-static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_rect,
+static struct rdp_win_data *create_win_data( HWND hwnd, const RECT *window_rect,
                                                  const RECT *client_rect )
 {
-    FIXME("android_win_data create_win_data\n");
-    struct android_win_data *data;
+    FIXME("rdp_win_data create_win_data\n");
+    struct rdp_win_data *data;
     HWND parent;
 
     if (!(parent = GetAncestor( hwnd, GA_PARENT ))) return NULL;  /* desktop or HWND_MESSAGE */
@@ -1343,7 +1347,7 @@ void CDECL RDP_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
     if (!device_init_done)
         return 0;
 
-    struct android_win_data *data = get_win_data( hwnd );
+    struct rdp_win_data *data = get_win_data( hwnd );
     RECT surface_rect;
     DWORD flags;
     COLORREF key;
@@ -1402,7 +1406,7 @@ void CDECL RDP_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
     if (!device_init_done)
         return 0;
 
-    struct android_win_data *data;
+    struct rdp_win_data *data;
     DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
     HWND owner = 0;
 
@@ -1454,7 +1458,7 @@ UINT CDECL RDP_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
  */
 void CDECL RDP_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
-    struct android_win_data *data;
+    struct rdp_win_data *data;
 
     if (parent == old_parent) return;
     if (!(data = get_win_data( hwnd ))) return;
@@ -1531,7 +1535,7 @@ void CDECL RDP_SetCursor( HCURSOR handle )
  */
 void CDECL RDP_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
-    struct android_win_data *data;
+    struct rdp_win_data *data;
     DWORD changed = style->styleNew ^ style->styleOld;
 
     if (hwnd == GetDesktopWindow()) return;
@@ -1555,7 +1559,7 @@ void CDECL RDP_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
  */
 void CDECL RDP_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
-    struct android_win_data *data;
+    struct rdp_win_data *data;
 
     if ((data = get_win_data( hwnd )))
     {
@@ -1573,7 +1577,7 @@ void CDECL RDP_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, 
 {
 	FIXME("RDP_SetLayeredWindowAttributes\n");
 #if 0
-    struct android_win_data *data;
+    struct rdp_win_data *data;
 
     if (!(flags & LWA_ALPHA)) alpha = 255;
     if (!(flags & LWA_COLORKEY)) key = CLR_INVALID;
@@ -1595,7 +1599,7 @@ BOOL CDECL RDP_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *in
 {
     FIXME("RDP_UpdateLayeredWindow\n");
     struct window_surface *surface;
-    struct android_win_data *data;
+    struct rdp_win_data *data;
     BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
     COLORREF color_key = (info->dwFlags & ULW_COLORKEY) ? info->crKey : CLR_INVALID;
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -1681,12 +1685,12 @@ done:
 LRESULT CDECL RDP_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     FIXME("RDP_WindowMessage\n");
-    struct android_win_data *data;
+    struct rdp_win_data *data;
 
     switch (msg)
     {
 #if 0
-    case WM_ANDROID_REFRESH:
+    case WM_RDP_REFRESH:
         if (wp)  /* opengl client window */
         {
             update_gl_drawable( hwnd );

@@ -21,8 +21,8 @@
 /* Copy of some Android native structures to avoid depending on the Android source */
 /* Hopefully these won't change too frequently... */
 
-#ifndef __WINE_ANDROID_NATIVE_H
-#define __WINE_ANDROID_NATIVE_H
+#ifndef __WINE_RDP_NATIVE_H
+#define __WINE_RDP_NATIVE_H
 
 /* Native window definitions */
 
@@ -36,26 +36,26 @@ typedef struct native_handle
 
 typedef const native_handle_t *buffer_handle_t;
 
-struct android_native_base_t
+struct rdp_native_base_t
 {
     int magic;
     int version;
     void *reserved[4];
-    void (*incRef)(struct android_native_base_t *base);
-    void (*decRef)(struct android_native_base_t *base);
+    void (*incRef)(struct rdp_native_base_t *base);
+    void (*decRef)(struct rdp_native_base_t *base);
 };
 
-typedef struct android_native_rect_t
+typedef struct rdp_native_rect_t
 {
     int32_t left;
     int32_t top;
     int32_t right;
     int32_t bottom;
-} android_native_rect_t;
+} rdp_native_rect_t;
 
 struct ANativeWindowBuffer
 {
-    struct android_native_base_t common;
+    struct rdp_native_base_t common;
     int width;
     int height;
     int stride;
@@ -68,7 +68,7 @@ struct ANativeWindowBuffer
 
 struct ANativeWindow
 {
-    struct android_native_base_t common;
+    struct rdp_native_base_t common;
     ULONG flags;
     int      minSwapInterval;
     int      maxSwapInterval;
@@ -130,7 +130,7 @@ enum native_window_api
     NATIVE_WINDOW_API_CAMERA = 4
 };
 
-enum android_pixel_format
+enum rdp_pixel_format
 {
     PF_RGBA_8888 = 1,
     PF_RGBX_8888 = 2,
@@ -146,7 +146,7 @@ enum android_pixel_format
 
 struct hw_module_methods_t;
 struct hw_device_t;
-struct android_ycbcr;
+struct rdp_ycbcr;
 
 struct hw_module_t
 {
@@ -183,18 +183,18 @@ struct gralloc_module_t
     int (*lock)(struct gralloc_module_t const *module, buffer_handle_t handle, int usage, int l, int t, int w, int h, void **vaddr);
     int (*unlock)(struct gralloc_module_t const *module, buffer_handle_t handle);
     int (*perform)(struct gralloc_module_t const *module, int operation, ... );
-    int (*lock_ycbcr)(struct gralloc_module_t const *module, buffer_handle_t handle, int usage, int l, int t, int w, int h, struct android_ycbcr *ycbcr);
+    int (*lock_ycbcr)(struct gralloc_module_t const *module, buffer_handle_t handle, int usage, int l, int t, int w, int h, struct rdp_ycbcr *ycbcr);
     void *reserved_proc[6];
 };
 
-#define ANDROID_NATIVE_MAKE_CONSTANT(a,b,c,d) \
+#define RDP_NATIVE_MAKE_CONSTANT(a,b,c,d) \
     (((unsigned)(a)<<24)|((unsigned)(b)<<16)|((unsigned)(c)<<8)|(unsigned)(d))
 
-#define ANDROID_NATIVE_WINDOW_MAGIC \
-    ANDROID_NATIVE_MAKE_CONSTANT('_','w','n','d')
+#define RDP_NATIVE_WINDOW_MAGIC \
+    RDP_NATIVE_MAKE_CONSTANT('_','w','n','d')
 
-#define ANDROID_NATIVE_BUFFER_MAGIC \
-    ANDROID_NATIVE_MAKE_CONSTANT('_','b','f','r')
+#define RDP_NATIVE_BUFFER_MAGIC \
+    RDP_NATIVE_MAKE_CONSTANT('_','b','f','r')
 
 enum gralloc_usage
 {
@@ -313,4 +313,4 @@ typedef struct gralloc1_rect
     int32_t height;
 } gralloc1_rect_t;
 
-#endif /* __WINE_ANDROID_NATIVE_H */
+#endif /* __WINE_RDP_NATIVE_H */

@@ -55,8 +55,8 @@ static HANDLE thread;
 static PVOID *jni_env;
 static HWND capture_window;
 
-//#define ANDROIDCONTROLTYPE  ((ULONG)'A')
-//#define ANDROID_IOCTL(n) CTL_CODE(ANDROIDCONTROLTYPE, n, METHOD_BUFFERED, FILE_READ_ACCESS)
+//#define RDPCONTROLTYPE  ((ULONG)'A')
+//#define RDP_IOCTL(n) CTL_CODE(RDPCONTROLTYPE, n, METHOD_BUFFERED, FILE_READ_ACCESS)
 
 enum android_ioctl
 {
@@ -505,7 +505,7 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
     if (!data || data->parent == win)
     {
         if (win) pHANDLE_release( win );
-        if (data && win) PostMessageW( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
+        if (data && win) PostMessageW( hwnd, WM_RDP_REFRESH, opengl, 0 );
         FIXME( "%p -> %p win %p (unchanged)\n", hwnd, data, win );
         return;
     }
@@ -520,7 +520,7 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
         //win->perform( win, NATIVE_WINDOW_SET_BUFFERS_FORMAT, data->buffer_format );
         //win->setSwapInterval( win, data->swap_interval );
         //unwrap_java_call();
-        PostMessageW( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
+        PostMessageW( hwnd, WM_RDP_REFRESH, opengl, 0 );
     }
     FIXME( "%p -> %p win %p\n", hwnd, data, win );
 #endif
@@ -1098,7 +1098,7 @@ static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
 	FIXME("ioctl_callback");
 #if 0
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    DWORD code = (irpsp->Parameters.DeviceIoControl.IoControlCode - ANDROID_IOCTL(0)) >> 2;
+    DWORD code = (irpsp->Parameters.DeviceIoControl.IoControlCode - RDP_IOCTL(0)) >> 2;
 
     if (code < NB_IOCTLS)
     {
@@ -1212,7 +1212,7 @@ static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void
         if (InterlockedCompareExchangePointer( &device, file, NULL )) CloseHandle( file );
     }
 #if 0
-    status = NtDeviceIoControlFile( device, NULL, NULL, NULL, &iosb, ANDROID_IOCTL(code),
+    status = NtDeviceIoControlFile( device, NULL, NULL, NULL, &iosb, RDP_IOCTL(code),
                                     in, in_size, out, out_size ? *out_size : 0 );
     if (status == STATUS_FILE_DELETED)
     {
@@ -1277,7 +1277,7 @@ static int dequeueBuffer( struct HANDLE *window, struct HANDLEBuffer **buffer, i
     {
         struct native_buffer_wrapper *buf = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*buf) );
 
-        buf->buffer.common.magic   = ANDROID_NATIVE_BUFFER_MAGIC;
+        buf->buffer.common.magic   = RDP_NATIVE_BUFFER_MAGIC;
         buf->buffer.common.version = sizeof( buf->buffer );
         buf->buffer.common.incRef  = buffer_incRef;
         buf->buffer.common.decRef  = buffer_decRef;
@@ -1504,7 +1504,7 @@ struct HANDLE *create_ioctl_window( HWND hwnd, BOOL opengl, float scale )
 
     if (!win) return NULL;
 
-    win->win.common.magic             = ANDROID_NATIVE_WINDOW_MAGIC;
+    win->win.common.magic             = RDP_NATIVE_WINDOW_MAGIC;
     win->win.common.version           = sizeof(HANDLE);
     win->win.common.incRef            = win_incRef;
     win->win.common.decRef            = win_decRef;

@@ -728,7 +728,7 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
     if ((unsigned int)keycode >= ARRAY_SIZE( keycode_to_vkey ) ||
         !keycode_to_vkey[keycode])
     {
-        p__android_log_print( ANDROID_LOG_WARN, "wine",
+        p__android_log_print( RDP_LOG_WARN, "wine",
                               "keyboard_event: win %x code %u unmapped key, ignoring", win, keycode );
         return JNI_FALSE;
     }
@@ -743,7 +743,7 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
     data.kbd.input.u.ki.dwFlags     = (data.kbd.input.u.ki.wScan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0;
     if (action == AKEY_EVENT_ACTION_UP) data.kbd.input.u.ki.dwFlags |= KEYEVENTF_KEYUP;
 
-    p__android_log_print( ANDROID_LOG_INFO, "wine",
+    p__android_log_print( RDP_LOG_INFO, "wine",
                           "keyboard_event: win %x code %u vkey %x scan %x meta %x",
                           win, keycode, data.kbd.input.u.ki.wVk, data.kbd.input.u.ki.wScan, state );
     send_event( &data );
@@ -752,9 +752,9 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
 
 
 /***********************************************************************
- *           ANDROID_ToUnicodeEx
+ *           RDP_ToUnicodeEx
  */
-INT CDECL ANDROID_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
+INT CDECL RDP_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                                LPWSTR buf, int size, UINT flags, HKL hkl )
 {
     WCHAR buffer[2];
@@ -846,9 +846,9 @@ INT CDECL ANDROID_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
 
 
 /***********************************************************************
- *           ANDROID_GetKeyNameText
+ *           RDP_GetKeyNameText
  */
-INT CDECL ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
+INT CDECL RDP_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
     int scancode, vkey, len;
     const char *name;
@@ -906,9 +906,9 @@ INT CDECL ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 
 
 /***********************************************************************
- *           ANDROID_MapVirtualKeyEx
+ *           RDP_MapVirtualKeyEx
  */
-UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
+UINT CDECL RDP_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
 {
     UINT ret = 0;
     const char *s;
@@ -969,9 +969,9 @@ UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
 
 
 /***********************************************************************
- *           ANDROID_GetKeyboardLayout
+ *           RDP_GetKeyboardLayout
  */
-HKL CDECL ANDROID_GetKeyboardLayout( DWORD thread_id )
+HKL CDECL RDP_GetKeyboardLayout( DWORD thread_id )
 {
     ULONG_PTR layout = GetUserDefaultLCID();
     LANGID langid;
@@ -989,9 +989,9 @@ HKL CDECL ANDROID_GetKeyboardLayout( DWORD thread_id )
 
 
 /***********************************************************************
- *           ANDROID_VkKeyScanEx
+ *           RDP_VkKeyScanEx
  */
-SHORT CDECL ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl )
+SHORT CDECL RDP_VkKeyScanEx( WCHAR ch, HKL hkl )
 {
     SHORT ret = -1;
     if (ch < ARRAY_SIZE( char_vkey_map )) ret = char_vkey_map[ch];

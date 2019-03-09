@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_ANDROID_H
-#define __WINE_ANDROID_H
+#ifndef __WINE_RDP_H
+#define __WINE_RDP_H
 
 #include <limits.h>
 #include <stdarg.h>
@@ -45,7 +45,7 @@
  * Android pseudo-device
  */
 
-extern void start_android_device(void) DECLSPEC_HIDDEN;
+extern void start_rdp_device(void) DECLSPEC_HIDDEN;
 //extern void register_native_window( HWND hwnd, struct HANDLE *win, BOOL client ) DECLSPEC_HIDDEN;
 extern struct HANDLE *create_ioctl_window( HWND hwnd, BOOL opengl, float scale ) DECLSPEC_HIDDEN;
 extern struct HANDLE *grab_ioctl_window( struct HANDLE *window ) DECLSPEC_HIDDEN;
@@ -69,9 +69,9 @@ extern unsigned int screen_height DECLSPEC_HIDDEN;
 extern RECT virtual_screen_rect DECLSPEC_HIDDEN;
 extern MONITORINFOEXW default_monitor DECLSPEC_HIDDEN;
 
-enum android_window_messages
+enum rdp_window_messages
 {
-    WM_ANDROID_REFRESH = 0x80001000,
+    WM_RDP_REFRESH = 0x80001000,
 };
 
 extern void init_gralloc( const struct hw_module_t *module ) DECLSPEC_HIDDEN;
@@ -137,6 +137,6 @@ union event_data
     } kbd;
 };
 
-int send_event( const union event_data *data ) DECLSPEC_HIDDEN;
+//int send_event( const union event_data *data ) DECLSPEC_HIDDEN;
 
-#endif  /* __WINE_ANDROID_H */
+#endif  /* __WINE_RDP_H */
