@@ -57,7 +57,7 @@ MONITORINFOEXW default_monitor =
 /* FIXME: Detect this from the RDP Channel */
 static const unsigned int screen_bpp = 32;  /* we don't support other modes */
 
-static int device_init_done;
+int device_init_done;
 
 typedef struct
 {
@@ -65,6 +65,23 @@ typedef struct
 } RDP_PDEVICE;
 
 static const struct gdi_dc_funcs android_drv_funcs;
+int pipe_thread();
+
+int delay_load_rdpdrv(void)
+{
+    if(!device_init_done)
+    {
+       if(!pipe_thread())
+       {
+           FIXME("winerdp driver - termsrv has not Opened file for communication yet\n");
+           return 0;
+       } else {
+           device_init();
+           FIXME("RDP_create_desktop no device_init_done starting now\n");
+	   return 1;
+       }
+    }
+}
 
 /******************************************************************************
  *           init_monitors
@@ -131,7 +148,7 @@ static void fetch_display_metrics(void)
  *
  * Perform initializations needed upon creation of the first device.
  */
-static void device_init(void)
+void device_init(void)
 {
     device_init_done = TRUE;
     fetch_display_metrics();
@@ -163,7 +180,14 @@ static RDP_PDEVICE *create_android_physdev(void)
 static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
                               LPCWSTR output, const DEVMODEW* initData )
 {
-//	FIXME("RDP_CreateDC\n");
+    FIXME("RDP_CreateDC\n");
+
+    if(!delay_load_rdpdrv())
+    {
+       FIXME("termsrv not loaded, delaying dll initialization");
+       return FALSE;
+    }
+
 #if 0
     RDP_PDEVICE *physdev = create_android_physdev();
 
@@ -183,7 +207,14 @@ static BOOL RDP_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
  */
 static BOOL RDP_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
-//	FIXME("RDP_CreateCompatibleDC\n");
+    FIXME("RDP_CreateCompatibleDC\n");
+
+    if(!delay_load_rdpdrv())
+    {
+       FIXME("termsrv not loaded, delaying dll initialization");
+       return FALSE;
+    }
+
 #if 0
     RDP_PDEVICE *physdev = create_android_physdev();
 
@@ -450,7 +481,11 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-	start_pipe_connection();
+        if(!delay_load_rdpdrv())
+	{
+             FIXME("termsrv not loaded, delaying dll initialization");
+	     return FALSE;
+	}
         DisableThreadLibraryCalls( inst );
         return process_attach();
     }

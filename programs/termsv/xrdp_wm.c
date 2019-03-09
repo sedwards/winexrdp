@@ -800,8 +800,8 @@ xrdp_wm_init(struct xrdp_wm *self)
         //termsv_msg_pipe("termsv_send_msg_pipe: from RDP_create_desktop");
         termsv_shm_msg("termsv_shm_msg: Message from RDP_create_desktop");
 	
-	TermsvCreateWindow(self);
-	TermsvCreateChildWindow(self);
+	//TermsvCreateWindow(self);
+	//TermsvCreateChildWindow(self);
 
 
         //HMODULE driver = LoadLibraryA( "winerdp.dll" );
@@ -820,6 +820,7 @@ xrdp_wm_init(struct xrdp_wm *self)
             }
             FreeLibrary( driver );
         }
+	TermsvCreateWindow(self);
 
 	printf("CreateDesktop should go herei\n");
         /* clear screen */

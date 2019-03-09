@@ -50,7 +50,7 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(android);
+WINE_DEFAULT_DEBUG_CHANNEL(rdp);
 
 /* private window data */
 struct android_win_data
@@ -1225,7 +1225,7 @@ static int get_cursor_system_id( const ICONINFOEXW *info )
     return 0;
 }
 
-
+extern int device_init_done;
 static WNDPROC desktop_orig_wndproc;
 
 static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
@@ -1262,7 +1262,11 @@ DWORD CDECL RDP_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 BOOL CDECL RDP_CreateWindow( HWND hwnd )
 {
     FIXME( "RDP_CreateWindow %p\n", hwnd );
-
+    if (!device_init_done)
+    {
+         FIXME( "RDP_CreateWindow - device_init_done is false termsv not yet loaded\n");
+         return FALSE;
+    }
     if (hwnd == GetDesktopWindow())
     {
         struct android_win_data *data;
@@ -1336,6 +1340,9 @@ void CDECL RDP_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                      const RECT *window_rect, const RECT *client_rect, RECT *visible_rect,
                                      struct window_surface **surface )
 {
+    if (!device_init_done)
+        return 0;
+
     struct android_win_data *data = get_win_data( hwnd );
     RECT surface_rect;
     DWORD flags;
@@ -1392,6 +1399,9 @@ void CDECL RDP_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                     const RECT *visible_rect, const RECT *valid_rects,
                                     struct window_surface *surface )
 {
+    if (!device_init_done)
+        return 0;
+
     struct android_win_data *data;
     DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
     HWND owner = 0;
@@ -1462,8 +1472,9 @@ void CDECL RDP_SetParent( HWND hwnd, HWND parent, HWND old_parent )
  */
 void CDECL RDP_SetCapture( HWND hwnd, UINT flags )
 {
+    FIXME("RDP_SetCapture\n");
     if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
-    ioctl_set_capture( hwnd );
+    //ioctl_set_capture( hwnd );
 }
 
 
@@ -1472,6 +1483,8 @@ void CDECL RDP_SetCapture( HWND hwnd, UINT flags )
  */
 void CDECL RDP_SetCursor( HCURSOR handle )
 {
+    FIXME("RDP_SetCursor\n");
+  #if 0
     static HCURSOR last_cursor;
     static DWORD last_cursor_change;
 
@@ -1509,6 +1522,7 @@ void CDECL RDP_SetCursor( HCURSOR handle )
         }
         else ioctl_set_cursor( 0, 0, 0, 0, 0, NULL );
     }
+#endif
 }
 
 
@@ -1700,37 +1714,52 @@ LRESULT CDECL RDP_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 void (WINAPI *pTermsvCreateWindow)(UINT width, UINT height);
 //void rdpdrv_send_msg_pipe(char *msg);
 //void rdpdrv_msg_pipe();
-void rdpdrv_read_shm_msg();
+int rdpdrv_read_shm_msg();
+int pipe_thread();
+int delay_load_rdpdrv();
 
 /***********************************************************************
  *           RDP_create_desktop
  */
 BOOL CDECL RDP_create_desktop( UINT width, UINT height )
 {
+    FIXME("Calling RDP_create_desktop\n");
     BOOL ret = FALSE;
     HMODULE termsv_mod = NULL;
+    int msg_status = 0;
 
-    //rdpdrv_send_msg_pipe("rdpsend_msg_pipe: from RDP_create_desktop");
-    rdpdrv_read_shm_msg();
-
-    FIXME("Calling RDP_create_desktop\n");
+    if(!delay_load_rdpdrv())
     {
+       FIXME("termsrv not loaded, delaying dll initialization");
+       return FALSE;
+    }
+
+    msg_status = rdpdrv_read_shm_msg();
+//    if(msg_status==1)
+//	device_init();
+
+//    if (device_init_done)
+//    {
+//        FIXME("RDP_create_desktop no device_init_done starting now\n");
+//        device_init();
+
+//       rdpdrv_read_shm_msg();
+    
        termsv_mod = GetModuleHandleA(NULL);
        if (termsv_mod == NULL)
           FIXME("Unable to get a handle to termsrv.exe.so process\n");
    
        pTermsvCreateWindow = (void *)GetProcAddress(termsv_mod, "TermsvCreateWindow");
        FIXME("Loaded Pointer to TermsvCreateWindow for the Desktop Window, FIX THE DAMN ARGUMENTS\n");
+
        //pTermsvCreateWindow( width, height );
-    }
 
-    desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
+       desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
                                                        (LONG_PTR)desktop_wndproc_wrapper );
-
 
     //pTermsvCreateWindow(pbuf, 1280x960);
 
-    return ret;
+      return ret;
 
 #if 0
     /* wait until we receive the surface changed event */

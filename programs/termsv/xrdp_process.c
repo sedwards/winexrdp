@@ -25,6 +25,7 @@
 #include "xrdp.h"
 
 static int g_session_id = 0;
+THREAD_RV THREAD_CC wine_rdp_shm_thread(VOID);
 
 /*****************************************************************************/
 /* always called from xrdp_listen thread */
@@ -94,7 +95,8 @@ xrdp_process_loop(struct xrdp_process *self, struct stream *s)
 	    g_snprintf(text, 255, "%d", self->session->client_info->bpp);
 	    printf("bpp %s\n,", text);
             rdp_client_info_bpp = self->session->client_info->bpp;
-            
+          
+	    tc_thread_create(wine_rdp_shm_thread, 0); 
 	    self->wm = xrdp_wm_create(self, self->session->client_info);
             /* at this point the wm(window manager) is create and wm::login_mode is
                zero and login_mode_event is set so xrdp_wm_init should be called by
@@ -232,8 +234,6 @@ xrdp_process_data_in(struct trans *self)
     return 0;
 }
 
-THREAD_RV THREAD_CC wine_rdp_shm_thread(VOID);
-
 /*****************************************************************************/
 int
 xrdp_process_main_loop(struct xrdp_process *self)
@@ -252,7 +252,7 @@ xrdp_process_main_loop(struct xrdp_process *self)
     // tc_thread_create(wine_named_pipe, 0);
 
     // initalize our shared memory for passing data back to the RDPDriver
-    tc_thread_create(wine_rdp_shm_thread, 0);
+//    tc_thread_create(wine_rdp_shm_thread, 0); 
 
     self->status = 1;
     self->server_trans->extra_flags = 0;

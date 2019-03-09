@@ -249,17 +249,23 @@ static int rdpdrv_printfA(const char *format, ...)
 
 WINE_DEFAULT_DEBUG_CHANNEL(rdp);
 
-const WCHAR szName[]={'G','l','o','b','a','l','\\','M','y','F','i','l','e','M','a','p','p','i','n','g','O','b','j','e','c','t',0};
+const WCHAR szName[]={'G','l','o','b','a','l','\\','R','D','P','s','e','r','v','e','r','0',0};
 
 HANDLE hMapFile;
 LPCSTR pBuf;
 
-void pipe_thread(void)
+int pipe_thread(void)
 {
+      FIXME("RDPdrv - pipe_thread started, mapping Global\\RDPserver0\n");
 //   HANDLE hMapFile;
 //   LPCWSTR pBuf;
-  
+   hMapFile = OpenFileMappingW(
+                   FILE_MAP_ALL_ACCESS,   // read/write access
+                   FALSE,                 // do not inherit the name
+                   szName);               // name of mapping object
 
+
+#if 0
    hMapFile = CreateFileMappingW(
                  INVALID_HANDLE_VALUE,    // use paging file
                  NULL,                    // default security
@@ -267,11 +273,12 @@ void pipe_thread(void)
                  0,                       // maximum object size (high-order DWORD)
                  BUF_SIZE,                // maximum object size (low-order DWORD)
                  szName);                 // name of mapping object
-
+#endif
    if (hMapFile == NULL)
    {
       FIXME("RDPdrv - Could not create file mapping object (%d).\n",
              GetLastError());
+      return 0;
    }
 /*
    pBuf = (LPSTR) MapViewOfFile(hMapFile,   // handle to map object
@@ -286,9 +293,12 @@ void pipe_thread(void)
       CloseHandle(hMapFile);
    }
  */
+   return 1;
 }
 
-void rdpdrv_read_shm_msg(void)
+extern int device_init_done;
+
+int rdpdrv_read_shm_msg(void)
 {
    rdpdrv_printfA("rdpdrv_read_shm_msg: Attempting to read message sent by Termsv.exe.so\n");
 
@@ -301,11 +311,15 @@ void rdpdrv_read_shm_msg(void)
    if (pBuf == NULL)
    {
       FIXME("RDPdrv - Could not map view of file (%d).\n", GetLastError());
-      CloseHandle(hMapFile);
+      UnmapViewOfFile(pBuf);
+      return 0;
+      //CloseHandle(hMapFile);
    }
 
-    mywprintfA("rdpdrv------------read:\n");
-    mywprintfA(pBuf);
-    mywprintfA("rdpdrv-------- From shared memory\n");
+    rdpdrv_printfA("rdpdrv------------read:\n");
+    rdpdrv_printfA(pBuf);
+    rdpdrv_printfA("rdpdrv-------- From shared memory\n");
+    //CloseHandle(hMapFile);
+    return 1;
 }
 

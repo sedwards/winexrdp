@@ -281,12 +281,14 @@ static struct native_win_data *get_ioctl_native_win_data( const struct ioctl_hea
     return get_native_win_data( LongToHandle(hdr->hwnd), hdr->opengl );
 }
 
+#if 0
 static int get_ioctl_win_parent( HWND parent )
 {
     if (parent != GetDesktopWindow() && !GetAncestor( parent, GA_PARENT ))
         return HandleToLong( HWND_MESSAGE );
     return HandleToLong( parent );
 }
+#endif
 
 static void wait_fence_and_close( int fence )
 {
@@ -1169,19 +1171,25 @@ static DWORD CALLBACK device_thread( void *arg )
 
     return ret;
 }
-////////
+
 DWORD CALLBACK pipe_thread();
+#if 0
 void start_pipe_connection(void)
 {
+    FIXME("start_pipe_connetion\n");
     CreateThread( NULL, 0, pipe_thread, NULL, 0, NULL );
 }
+#endif
+
 ///////
 void start_android_device(void)
 {
-    HANDLE handles[2];
+    FIXME("start_andriod_device\n");
+    HANDLE handles[3];
 
     handles[0] = CreateEventW( NULL, TRUE, FALSE, NULL );
     handles[1] = thread = CreateThread( NULL, 0, device_thread, handles[0], 0, NULL );
+    handles[2] = thread = CreateThread( NULL, 0, pipe_thread, handles[0], 0, NULL );
     WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
     CloseHandle( handles[0] );
 }
@@ -1584,9 +1592,6 @@ int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale )
     return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
 }
 
-#endif
-
-
 int ioctl_set_capture( HWND hwnd )
 {
     struct ioctl_android_set_capture req;
@@ -1616,3 +1621,6 @@ int ioctl_set_cursor( int id, int width, int height,
     HeapFree( GetProcessHeap(), 0, req );
     return ret;
 }
+
+#endif
+

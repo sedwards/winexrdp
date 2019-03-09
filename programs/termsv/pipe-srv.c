@@ -290,8 +290,8 @@ void termsv_read_msg_pipe()
 #define BUF_SIZE 1024
 #define BUF_SIZE2 4096 
 const WCHAR szName[]={'G','l','o','b','a','l','\\','R','D','P','s','e','r','v','e','r','0',0};
-WCHAR buf[BUF_SIZE2]={'d','s','t',0};
-const WCHAR pbData[BUF_SIZE2]={'M','e','s','s','a','g','e','f','r','o','m','f','i','r','s','t','p','r','o','c','e','s','s',0};
+//WCHAR buf[BUF_SIZE2]={'d','s','t',0};
+//const WCHAR pbData[BUF_SIZE2]={'M','e','s','s','a','g','e','f','r','o','m','f','i','r','s','t','p','r','o','c','e','s','s',0};
 //char szName[]={"Global\\MyFileMappingObject"};
 const char szMsg[]={"Message from first process."};
 
