@@ -25,25 +25,25 @@
 
 int
 tc_thread_create(THREAD_RV (THREAD_CC * start_routine)(void*), void* arg);
-tbus
+intptr_t
 tc_get_threadid(void);
 int
-tc_threadid_equal(tbus tid1, tbus tid2);
-tbus
+tc_threadid_equal(intptr_t tid1, intptr_t tid2);
+intptr_t
 tc_mutex_create(void);
 void
-tc_mutex_delete(tbus mutex);
+tc_mutex_delete(intptr_t mutex);
 int
-tc_mutex_lock(tbus mutex);
+tc_mutex_lock(intptr_t mutex);
 int
-tc_mutex_unlock(tbus mutex);
-tbus
+tc_mutex_unlock(intptr_t mutex);
+intptr_t
 tc_sem_create(int init_count);
 void
-tc_sem_delete(tbus sem);
+tc_sem_delete(intptr_t sem);
 int
-tc_sem_dec(tbus sem);
+tc_sem_dec(intptr_t sem);
 int
-tc_sem_inc(tbus sem);
+tc_sem_inc(intptr_t sem);
 
 #endif

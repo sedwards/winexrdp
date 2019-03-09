@@ -43,8 +43,8 @@ static SERVICE_STATUS_HANDLE service_handle;
 
 static long g_sync_mutex = 0;
 static long g_sync1_mutex = 0;
-static tbus g_term_event = 0;
-static tbus g_sync_event = 0;
+static intptr_t g_term_event = 0;
+static intptr_t g_sync_event = 0;
 /* synchronize stuff */
 static int g_sync_command = 0;
 static long g_sync_result = 0;
@@ -96,7 +96,7 @@ g_xrdp_sync(long (*sync_func)(long param1, long param2), long sync_param1,
 void
 xrdp_shutdown(int sig)
 {
-    tbus threadid;
+    intptr_t threadid;
 
     threadid = tc_get_threadid();
     g_writeln("shutting down");
@@ -130,14 +130,14 @@ g_set_term(int in_val)
 }
 
 /*****************************************************************************/
-tbus
+intptr_t
 g_get_term_event(void)
 {
     return g_term_event;
 }
 
 /*****************************************************************************/
-tbus
+intptr_t
 g_get_sync_event(void)
 {
     return g_sync_event;

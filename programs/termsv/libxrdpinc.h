@@ -77,7 +77,7 @@ struct xrdp_session
 };
 
 struct xrdp_session *
-libxrdp_init(tbus id, struct trans *trans);
+libxrdp_init(intptr_t id, struct trans *trans);
 int
 libxrdp_exit(struct xrdp_session *session);
 int

@@ -62,7 +62,7 @@ struct source_info
 
 struct trans
 {
-    tbus sck; /* socket handle */
+    intptr_t sck; /* socket handle */
     int mode; /* 1 tcp, 2 unix socket, 3 vsock */
     int status;
     int type1; /* 1 listener 2 server 3 client */
@@ -94,11 +94,11 @@ trans_create(int mode, int in_size, int out_size);
 void
 trans_delete(struct trans* self);
 int
-trans_get_wait_objs(struct trans* self, tbus* objs, int* count);
+trans_get_wait_objs(struct trans* self, intptr_t* objs, int* count);
 int
 trans_get_wait_objs_rw(struct trans *self,
-                       tbus *robjs, int *rcount,
-                       tbus *wobjs, int *wcount, int *timeout);
+                       intptr_t *robjs, int *rcount,
+                       intptr_t *wobjs, int *wcount, int *timeout);
 int
 trans_check_wait_objs(struct trans* self);
 int

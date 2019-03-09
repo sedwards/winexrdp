@@ -26,7 +26,7 @@
 
 /* 'g_process' is protected by the semaphore 'g_process_sem'.  One thread sets
    g_process and waits for the other to process it */
-static tbus g_process_sem = 0;
+static intptr_t g_process_sem = 0;
 static struct xrdp_process *g_process = 0;
 
 /*****************************************************************************/
@@ -103,7 +103,7 @@ xrdp_listen_delete(struct xrdp_listen *self)
 static int
 xrdp_listen_add_pro(struct xrdp_listen *self, struct xrdp_process *process)
 {
-    list_add_item(self->process_list, (tbus)process);
+    list_add_item(self->process_list, (intptr_t)process);
     return 0;
 }
 
@@ -350,10 +350,10 @@ xrdp_listen_main_loop(struct xrdp_listen *self)
     int timeout = 0;
     char port[128];
     char address[256];
-    tbus robjs[8];
-    tbus term_obj;
-    tbus sync_obj;
-    tbus done_obj;
+    intptr_t robjs[8];
+    intptr_t term_obj;
+    intptr_t sync_obj;
+    intptr_t done_obj;
     int tcp_nodelay;
     int tcp_keepalive;
     int bytes;

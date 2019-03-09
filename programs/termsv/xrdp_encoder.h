@@ -15,12 +15,12 @@ struct xrdp_encoder
     int codec_id;
     int codec_quality;
     int max_compressed_bytes;
-    tbus xrdp_encoder_event_to_proc;
-    tbus xrdp_encoder_event_processed;
-    tbus xrdp_encoder_term;
+    intptr_t xrdp_encoder_event_to_proc;
+    intptr_t xrdp_encoder_event_processed;
+    intptr_t xrdp_encoder_term;
     FIFO *fifo_to_proc;
     FIFO *fifo_processed;
-    tbus mutex;
+    intptr_t mutex;
     int (*process_enc)(struct xrdp_encoder *self, struct xrdp_enc_data *enc);
     void *codec_handle;
     int frame_id_client; /* last frame id received from client */

@@ -150,28 +150,28 @@ tc_thread_create(unsigned long (__stdcall *start_routine)(void *), void *arg)
 }
 
 typedef signed __int64 intptr_t;
-typedef intptr_t tbus;
+typedef intptr_t intptr_t;
 
 /*****************************************************************************/
-tbus
+intptr_t
 tc_sem_create(int init_count)
 {
     HANDLE sem;
 
     sem = CreateSemaphoreW(0, init_count, init_count + 10, 0);
-    return (tbus)sem;
+    return (intptr_t)sem;
 }
 
 /*****************************************************************************/
 void
-tc_sem_delete(tbus sem)
+tc_sem_delete(intptr_t sem)
 {
     CloseHandle((HANDLE)sem);
 }
 
 /*****************************************************************************/
 int
-tc_sem_dec(tbus sem)
+tc_sem_dec(intptr_t sem)
 {
     WaitForSingleObject((HANDLE)sem, INFINITE);
     return 0;
@@ -179,7 +179,7 @@ tc_sem_dec(tbus sem)
 
 /*****************************************************************************/
 int
-tc_sem_inc(tbus sem)
+tc_sem_inc(intptr_t sem)
 {
     ReleaseSemaphore((HANDLE)sem, 1, 0);
     return 0;

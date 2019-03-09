@@ -1720,7 +1720,7 @@ g_create_wait_obj_from_socket(tintptr socket, int write)
 
     if (WSAEventSelect(socket, event, lnetevent) == 0)
     {
-        return (tbus)event;
+        return (intptr_t)event;
     }
     else
     {

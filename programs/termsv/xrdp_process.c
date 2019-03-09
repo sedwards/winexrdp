@@ -30,7 +30,7 @@ THREAD_RV THREAD_CC wine_rdp_shm_thread(VOID);
 /*****************************************************************************/
 /* always called from xrdp_listen thread */
 struct xrdp_process *
-xrdp_process_create(struct xrdp_listen *owner, tbus done_event)
+xrdp_process_create(struct xrdp_listen *owner, intptr_t done_event)
 {
     struct xrdp_process *self;
     char event_name[256];
@@ -242,9 +242,9 @@ xrdp_process_main_loop(struct xrdp_process *self)
     int wobjs_count;
     int cont;
     int timeout = 0;
-    tbus robjs[32];
-    tbus wobjs[32];
-    tbus term_obj;
+    intptr_t robjs[32];
+    intptr_t wobjs[32];
+    intptr_t term_obj;
 
     printf(("xrdp_process_main_loop"));
 
@@ -261,7 +261,7 @@ xrdp_process_main_loop(struct xrdp_process *self)
     self->server_trans->trans_data_in = xrdp_process_data_in;
     self->server_trans->callback_data = self;
     init_stream(self->server_trans->in_s, 8192 * 4);
-    self->session = libxrdp_init((tbus)self, self->server_trans);
+    self->session = libxrdp_init((intptr_t)self, self->server_trans);
     self->server_trans->si = &(self->session->si);
     self->server_trans->my_source = XRDP_SOURCE_CLIENT;
     /* this callback function is in xrdp_wm.c */

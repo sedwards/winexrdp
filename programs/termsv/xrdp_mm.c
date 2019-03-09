@@ -1371,8 +1371,8 @@ xrdp_mm_get_sesman_port(char *port, int port_bytes)
 /* returns error
    data coming from client that need to go to channel handler */
 int
-xrdp_mm_process_channel_data(struct xrdp_mm *self, tbus param1, tbus param2,
-                             tbus param3, tbus param4)
+xrdp_mm_process_channel_data(struct xrdp_mm *self, intptr_t param1, intptr_t param2,
+                             intptr_t param3, intptr_t param4)
 {
     //struct stream *s;
     int rv;
@@ -2072,8 +2072,8 @@ xrdp_mm_connect(struct xrdp_mm *self)
 /*****************************************************************************/
 int
 xrdp_mm_get_wait_objs(struct xrdp_mm *self,
-                      tbus *read_objs, int *rcount,
-                      tbus *write_objs, int *wcount, int *timeout)
+                      intptr_t *read_objs, int *rcount,
+                      intptr_t *write_objs, int *wcount, int *timeout)
 {
     int rv = 0;
 
@@ -2119,7 +2119,7 @@ xrdp_mm_get_wait_objs(struct xrdp_mm *self,
 static int
 xrdp_mm_dump_jpeg(struct xrdp_mm *self, XRDP_ENC_DATA_DONE *enc_done)
 {
-    static tbus ii;
+    static intptr_t ii;
     static int jj;
     struct _header
     {
@@ -3077,8 +3077,8 @@ int update_allowed_channel_names(struct xrdp_wm *wm, struct list *names, struct 
             }
             val = (char *)list_get_item(wm->mm->login_values, index);
             // (re)add to lists
-            list_add_item(names, (tbus)g_strdup(name));
-            list_add_item(values, (tbus)g_strdup(val));
+            list_add_item(names, (intptr_t)g_strdup(name));
+            list_add_item(values, (intptr_t)g_strdup(val));
         }
     }
     return ret;

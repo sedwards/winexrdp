@@ -30,6 +30,8 @@
 #include "winbase.h"
 #include "winreg.h"
 
+#include "wine/unicode.h"
+
 /*****************************************************************************/
 struct xrdp_wm *
 xrdp_wm_create(struct xrdp_process *owner,
@@ -1864,8 +1866,8 @@ xrdp_wm_process_input_mousex(struct xrdp_wm* self, int device_flags,
    param4 = total size */
 static int
 xrdp_wm_process_channel_data(struct xrdp_wm *self,
-                             tbus param1, tbus param2,
-                             tbus param3, tbus param4)
+                             intptr_t param1, intptr_t param2,
+                             intptr_t param3, intptr_t param4)
 {
     int rv;
     int chanid ;
@@ -2195,8 +2197,8 @@ xrdp_wm_log_msg(struct xrdp_wm *self, enum logLevels loglevel,
 
 /*****************************************************************************/
 int
-xrdp_wm_get_wait_objs(struct xrdp_wm *self, tbus *robjs, int *rc,
-                      tbus *wobjs, int *wc, int *timeout)
+xrdp_wm_get_wait_objs(struct xrdp_wm *self, intptr_t *robjs, int *rc,
+                      intptr_t *wobjs, int *wc, int *timeout)
 {
     int i;
 

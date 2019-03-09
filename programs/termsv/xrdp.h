@@ -50,9 +50,9 @@ int
 g_is_term(void);
 void
 g_set_term(int in_val);
-tbus
+intptr_t
 g_get_term_event(void);
-tbus
+intptr_t
 g_get_sync_event(void);
 void
 g_process_waiting_function(void);
@@ -148,8 +148,8 @@ int
 xrdp_wm_log_msg(struct xrdp_wm *self, enum logLevels loglevel,
                 const char *fmt, ...) printflike(3, 4);
 int
-xrdp_wm_get_wait_objs(struct xrdp_wm* self, tbus* robjs, int* rc,
-                      tbus* wobjs, int* wc, int* timeout);
+xrdp_wm_get_wait_objs(struct xrdp_wm* self, intptr_t* robjs, int* rc,
+                      intptr_t* wobjs, int* wc, int* timeout);
 int
 xrdp_wm_check_wait_objs(struct xrdp_wm* self);
 int
@@ -157,7 +157,7 @@ xrdp_wm_set_login_mode(struct xrdp_wm* self, int login_mode);
 
 /* xrdp_process.c */
 struct xrdp_process*
-xrdp_process_create(struct xrdp_listen* owner, tbus done_event);
+xrdp_process_create(struct xrdp_listen* owner, intptr_t done_event);
 void
 xrdp_process_delete(struct xrdp_process* self);
 int
@@ -377,12 +377,12 @@ xrdp_mm_delete(struct xrdp_mm* self);
 int
 xrdp_mm_connect(struct xrdp_mm* self);
 int
-xrdp_mm_process_channel_data(struct xrdp_mm* self, tbus param1, tbus param2,
-                             tbus param3, tbus param4);
+xrdp_mm_process_channel_data(struct xrdp_mm* self, intptr_t param1, intptr_t param2,
+                             intptr_t param3, intptr_t param4);
 int
 xrdp_mm_get_wait_objs(struct xrdp_mm* self,
-                      tbus* read_objs, int* rcount,
-                      tbus* write_objs, int* wcount, int* timeout);
+                      intptr_t* read_objs, int* rcount,
+                      intptr_t* write_objs, int* wcount, int* timeout);
 int
 xrdp_mm_check_chan(struct xrdp_mm *self);
 int

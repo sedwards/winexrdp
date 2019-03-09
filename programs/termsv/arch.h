@@ -120,7 +120,7 @@ typedef int64_t ti64;
 typedef uint64_t tui64;
 typedef int64_t tsi64;
 typedef bool_t tbool;
-typedef intptr_t tbus;
+typedef intptr_t intptr_t;
 typedef intptr_t tintptr;
 
 /* wide char, socket */

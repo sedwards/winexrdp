@@ -228,8 +228,8 @@ process_enc_jpg(struct xrdp_encoder *self, XRDP_ENC_DATA *enc)
     char *out_data;
     XRDP_ENC_DATA_DONE *enc_done;
     FIFO *fifo_processed;
-    tbus mutex;
-    tbus event_processed;
+    intptr_t mutex;
+    intptr_t event_processed;
 
     LLOGLN(10, ("process_enc_jpg:"));
     quality = self->codec_quality;
@@ -318,8 +318,8 @@ process_enc_rfx(struct xrdp_encoder *self, XRDP_ENC_DATA *enc)
     char *out_data;
     XRDP_ENC_DATA_DONE *enc_done;
     FIFO *fifo_processed;
-    tbus mutex;
-    tbus event_processed;
+    intptr_t mutex;
+    intptr_t event_processed;
     struct rfx_tile *tiles;
     struct rfx_rect *rfxrects;
     int alloc_bytes;
@@ -434,16 +434,16 @@ proc_enc_msg(void *arg)
 {
     XRDP_ENC_DATA *enc;
     FIFO *fifo_to_proc;
-    tbus mutex;
-    tbus event_to_proc;
-    tbus term_obj;
-    tbus lterm_obj;
+    intptr_t mutex;
+    intptr_t event_to_proc;
+    intptr_t term_obj;
+    intptr_t lterm_obj;
     int robjs_count;
     int wobjs_count;
     int cont;
     int timeout;
-    tbus robjs[32];
-    tbus wobjs[32];
+    intptr_t robjs[32];
+    intptr_t wobjs[32];
     struct xrdp_encoder *self;
 
     LLOGLN(0, ("proc_enc_msg: thread is running"));
