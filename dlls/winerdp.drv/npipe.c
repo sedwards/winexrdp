@@ -298,6 +298,31 @@ int pipe_thread(void)
 
 extern int device_init_done;
 
+struct termsv_wm_data{
+    int height;
+    int width;
+    int bpp;
+};
+
+#if 0
+void populate_rdp_driver(struct xrdp_wm *self)
+{
+    struct termsv_wm_data rdpdrv_wm_data;
+    struct termsv_wm_data *ptr_rdpdrv_wm_data;
+
+    rdpdrv_wm_data.height = self->session->client_info->width;
+    rdpdrv_wm_data.width = self->session->client_info->height;
+    rdpdrv_wm_data.bpp = self->session->client_info->bpp;
+
+    printf("Session Height is: %d, Width is %d, and depth is %d\n",
+              rdpdrv_wm_data.height,rdpdrv_wm_data.width,rdpdrv_wm_data.bpp);
+
+    ptr_rdpdrv_wm_data = &rdpdrv_wm_data;
+    termsv_shm_msg((PVOID)ptr_rdpdrv_wm_data);
+}
+#endif
+
+
 int rdpdrv_read_shm_msg(void)
 {
 //   rdpdrv_printfA("rdpdrv_read_shm_msg: Attempting to read message sent by Termsv.exe.so\n");

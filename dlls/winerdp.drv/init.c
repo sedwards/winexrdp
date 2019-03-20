@@ -71,6 +71,26 @@ int pipe_thread(void);
 int rdp_shm_channel;
 void device_init(void);
 
+void (WINAPI *pTermsvCreateWindow)(UINT width, UINT height);
+int (WINAPI *pLoadMetrics)(const char *type);
+
+#if 0
+void get_termsv_functions(void)
+{
+    HMODULE termsv_mod = NULL;
+    int status;
+
+    FIXME("RDP_create_desktop going to try to get handle to termsv.exe.so\n");
+    termsv_mod = GetModuleHandleA(NULL);
+    if (termsv_mod == NULL)
+      FIXME("Unable to get a handle to termsrv.exe.so process\n");
+
+    pLoadMetrics = (void *)GetProcAddress(termsv_mod, "LoadMetrics");
+    FIXME("Calling pLoadMetrics\n");
+    FIXME("RDP_create_desktop termsv.exe.so delay loading completed\n");
+}
+#endif
+
 int delay_load_rdpdrv(void)
 {
     rdp_shm_channel = FALSE;
@@ -78,16 +98,17 @@ int delay_load_rdpdrv(void)
     {
        if(!pipe_thread())
        {
-           FIXME("delay_load_rdpdrv: termsrv has not Opened file for communication yet\n");
+           FIXME("termsrv has not Opened file for communication yet\n");
            return 0;
        } else {
-           FIXME("delay_load_rdpdrv: device_init_done starting now\n");
+	   //get_termsv_functions();
+           FIXME("device_init_done starting now\n");
            device_init();
            rdp_shm_channel = TRUE;
 	   return 1;
        }
     }
-    return 0;
+    return 1;
 }
 
 /******************************************************************************
@@ -127,23 +148,54 @@ void set_screen_dpi( DWORD dpi )
     }
 }
 
-extern struct xrdp_wm self;
+struct termsv_wm_data{
+    int height;
+    int width;
+    int bpp;
+};
+
+struct termsv_wm_data rdpdrv_wm_data;
+//int width, height, bpp;
+#if 0
+void populate_rdp_driver(char *)
+{   
+    struct termsv_wm_data rdpdrv_wm_data;
+
+    rdpdrv_wm_data.height = self->session->client_info->width;
+    rdpdrv_wm_data.width = self->session->client_info->height;
+    rdpdrv_wm_data.bpp = self->session->client_info->bpp;
+}
+#endif
 
 /**********************************************************************
  *	     fetch_display_metrics
  */
-static void fetch_display_metrics(void)
+void fetch_display_metrics(void)
 {
-    char text[256];
-    FIXME("fetch_display_metrics------------------\n");
-    rdpdrv_read_shm_msg();
+#if 0
+   HMODULE termsv_mod;
+   termsv_mod = GetModuleHandleA(NULL);
+   if (termsv_mod == NULL)
+      FIXME("Unable to get a handle to termsrv.exe.so process\n");
 
-//    g_snprintf(text, 255, "%d", self->target_surface);
-//    printf("surface %s\n,", text);
-//    g_snprintf(text, 255, "%d", self->current_surface_index);
-//    printf("surface index %s\n,", text);
-//    g_snprintf(text, 255, "%d", self);
-//    printf("Self %s\n,", text);
+    pLoadMetrics = (void *)GetProcAddress(termsv_mod, "LoadMetrics");
+    FIXME("Loaded Pointer to pLoadMetrics\n");
+
+//    char text[256];
+    FIXME("fetch_display_metrics------------------\n");
+    FIXME("fetch_display_metrics------------------2\n");
+    //rdpdrv_read_shm_msg();
+//    rdpdrv_wm_data.width = pLoadMetrics("width");
+    pLoadMetrics("width");
+//    rdpdrv_wm_data.height = pLoadMetrics("height");
+     pLoadMetrics("height");
+//    rdpdrv_wm_data.bpp = pLoadMetrics("bpp");
+     pLoadMetrics("bpp");
+
+    //FIXME("global variable width %d\n,", rdpdrv_wm_data.width);
+    //FIXME("global variable height %d\n,", rdpdrv_wm_data.height);
+    //FIXME("global variable bpp %d\n,", rdpdrv_wm_data.bpp);
+    FIXME("fetch_display_metrics------------------??????????\n");
 
     SERVER_START_REQ( get_window_rectangles )
     {
@@ -159,6 +211,7 @@ static void fetch_display_metrics(void)
 
     init_monitors( screen_width, screen_height );
     FIXME( "fetch_display_metrics ------------ screen %ux%u\n", screen_width, screen_height );
+#endif
 }
 
 
@@ -170,7 +223,7 @@ static void fetch_display_metrics(void)
 void device_init(void)
 {
     device_init_done = TRUE;
-    fetch_display_metrics();
+    //fetch_display_metrics();
     FIXME("device_init\n");
 }
 

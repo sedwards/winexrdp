@@ -22,7 +22,17 @@
 #include <config_ac.h>
 #endif
 
+#include <stdarg.h>
+#include <stdio.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
+
 #include "xrdp.h"
+#include "termsv.h"
+
+#include "wine/unicode.h"
 
 static int g_session_id = 0;
 THREAD_RV THREAD_CC wine_rdp_shm_thread(VOID);
@@ -63,14 +73,42 @@ xrdp_process_delete(struct xrdp_process *self)
     trans_delete(self->server_trans);
     g_free(self);
 }
+#if 0
+struct termsv_wm_data{
+    int height;
+    int width;
+    int bpp;
+};
 
-int rdp_client_info_width, rdp_client_info_height, rdp_client_info_bpp;
+struct termsv_wm_data rdpdrv_wm_data;
 
+int WINAPI LoadMetrics(char *type)
+{
+   printf("LoadMetrics called\n");
+   if(lstrcmpA(type,"width"))
+   {
+       printf("LoadMetrics - returning width\n");
+       return rdpdrv_wm_data.width;
+   }
+   if(lstrcmpA(type,"hight"))
+   {	   
+       printf("LoadMetrics - returning height\n");
+       return rdpdrv_wm_data.height;
+   }
+   if(lstrcmpA(type,"bpp"))
+   {
+       printf("LoadMetrics - returning bpp\n");
+       return rdpdrv_wm_data.bpp;
+   }
+   printf("LoadMetrics called with malformed argument, doing nothing\n");
+   return 1;
+}
+#endif
 /*****************************************************************************/
 static int
 xrdp_process_loop(struct xrdp_process *self, struct stream *s)
 {
-    int rv;
+    int rv, fucking_bpp;
     rv = 0;
     char text[256];
     g_memset(text, 0, sizeof(text));
@@ -82,21 +120,32 @@ xrdp_process_loop(struct xrdp_process *self, struct stream *s)
 
         if ((self->wm == 0) && (self->session->up_and_running) && (rv == 0))
         {
-            DEBUG(("calling xrdp_wm_init and creating wm"));
-	    
-	    g_snprintf(text, 255, "%d", self->session->client_info->width);
-	    printf("width %s\n,", text);
-            rdp_client_info_width = self->session->client_info->width;
+	    tc_thread_create(wine_rdp_shm_thread, 0);
+       //     rdpdrv_wm_data.width = self->session->client_info->width;
+       //    rdpdrv_wm_data.height = self->session->client_info->height;
+       //     rdpdrv_wm_data.bpp = self->session->client_info->bpp;
 
-            g_snprintf(text, 255, "%d", self->session->client_info->height);
-	    printf("height %s\n,", text);
-            rdp_client_info_height = self->session->client_info->height;
+    //fucking_bpp = LoadMetrics("bpp");
+    //printf("fucking bpp %d\n, fucking_bpp");
+
+         DEBUG(("calling xrdp_wm_init and creating wm"));
+	    
+	 //   g_snprintf(text, 255, "%d", self->session->client_info->width);
+	 //   printf("termsv width %s\n,", text);
+//	    printf("termsv width %d\n,", self->session->client_info->width);
+
+         //   g_snprintf(text, 255, "%d", self->session->client_info->height);
+	 //   printf("termsv height %s\n,", text);
+//	    printf("termsv height %d\n,", self->session->client_info->height);
             
-	    g_snprintf(text, 255, "%d", self->session->client_info->bpp);
-	    printf("bpp %s\n,", text);
-            rdp_client_info_bpp = self->session->client_info->bpp;
-          
-	    tc_thread_create(wine_rdp_shm_thread, 0); 
+	 //   g_snprintf(text, 255, "%d", self->session->client_info->bpp);
+	 //   printf("termsv bpp %s\n,", text);
+//	    printf("termsv bpp %d\n,", self->session->client_info->bpp);
+         
+            //LoadMetrics("width");
+            //LoadMetrics("height");
+            //LoadMetrics("bpp");
+	 //   load_rdp_drv();
 	    self->wm = xrdp_wm_create(self, self->session->client_info);
             /* at this point the wm(window manager) is create and wm::login_mode is
                zero and login_mode_event is set so xrdp_wm_init should be called by

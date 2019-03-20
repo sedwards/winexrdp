@@ -31,15 +31,26 @@
 #endif
 /* other macros */
 #undef MIN
+#ifndef MIN
 #define MIN(x1, x2) ((x1) < (x2) ? (x1) : (x2))
+#endif
 #undef MAX
+#ifndef MAX
 #define MAX(x1, x2) ((x1) > (x2) ? (x1) : (x2))
+#endif
 #undef HIWORD
+#ifndef HIWORD
 #define HIWORD(in) (((in) & 0xffff0000) >> 16)
+#endif
 #undef LOWORD
+#ifndef LOWORD
 #define LOWORD(in) ((in) & 0x0000ffff)
+#endif
 #undef MAKELONG
+#ifndef MAKELONG
 #define MAKELONG(lo, hi) ((((hi) & 0xffff) << 16) | ((lo) & 0xffff))
+#endif
+
 #define MAKERECT(r, x, y, cx, cy) \
 { (r).left = x; (r).top = y; (r).right = (x) + (cx); (r).bottom = (y) + (cy); }
 #define ISRECTEMPTY(r) (((r).right <= (r).left) || ((r).bottom <= (r).top))

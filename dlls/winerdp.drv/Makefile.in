@@ -2,6 +2,7 @@ MODULE  = winerdp.drv
 IMPORTS = uuid ole32 user32 gdi32 advapi32 ntoskrnl
 
 C_SRCS = \
+	delay_load.c \
 	device.c \
 	init.c \
 	npipe.c \

@@ -30,7 +30,7 @@
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) RDP_WindowPosChanged
 
 # Desktop
-@ cdecl wine_create_desktop(long long) RDP_create_desktop
+@ cdecl wine_create_desktop(long long long) RDP_create_desktop
 
 # MMDevAPI driver functions
 ;@ stdcall -private GetPriority() AUDDRV_GetPriority

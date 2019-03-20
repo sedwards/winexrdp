@@ -3694,30 +3694,6 @@ g_text2bool(const char *s)
 }
 
 /*****************************************************************************/
-/* returns pointer or nil on error */
-void *
-g_shmat(int shmid)
-{
-#if defined(_WIN32)
-    return 0;
-#else
-     return shmat(shmid, 0, 0);
-#endif
-}
-
-/*****************************************************************************/
-/* returns -1 on error 0 on success */
-int
-g_shmdt(const void *shmaddr)
-{
-#if defined(_WIN32)
-    return -1;
-#else
-    return shmdt(shmaddr);
-#endif
-}
-
-/*****************************************************************************/
 /* returns -1 on error 0 on success */
 int
 g_gethostname(char *name, int len)

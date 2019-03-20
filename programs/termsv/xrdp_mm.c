@@ -23,20 +23,7 @@
 #endif
 #include "xrdp.h"
 
-#if 0
-#ifndef USE_NOPAM
-#if defined(HAVE__PAM_TYPES_H)
-#define LINUXPAM 1
-#include <security/_pam_types.h>
-#elif defined(HAVE_PAM_CONSTANTS_H)
-#define OPENPAM 1
-#include <security/pam_constants.h>
-#endif
-#endif /* USE_NOPAM */
-#endif
-
 #include "xrdp_encoder.h"
-//#include "xrdp_sockets.h"
 
 #define LLOG_LEVEL 1
 #define LLOGLN(_level, _args) \
@@ -51,11 +38,6 @@
   while (0)
 
 #include <string.h>
-//#define g_strcasecmp strcasecmp
-//
-//#include "libxrdp_oscalls.h"
-//#include "libxrdp_list.h"
-//#include "libxrdp_ssl_calls.h"
 
 /*****************************************************************************/
 struct xrdp_mm *
@@ -1979,7 +1961,7 @@ xrdp_mm_connect(struct xrdp_mm *self)
     }
 #endif
 #endif
-
+#if 0
     if (self->sesman_controlled)
     {
         ok = 0;
@@ -2028,6 +2010,7 @@ xrdp_mm_connect(struct xrdp_mm *self)
         }
     }
     else /* no sesman */
+	  #endif
     {
         if (xrdp_mm_setup_mod1(self) == 0)
         {

@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "xrdp.h"
+#include "termsv.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -630,11 +631,33 @@ void termsv_read_msg_pipe();
 
 extern LPCWSTR pBuf;
 
+int WINAPI LoadMetrics(const char *type)
+{
+   printf("LoadMetrics called\n");
+   if(lstrcmpA(type,"width"))
+   {
+       printf("LoadMetrics - returning width\n");
+       return rdpdrv_wm_data.width;
+   }
+   if(lstrcmpA(type,"hight"))
+   {       
+       printf("LoadMetrics - returning height\n");
+       return rdpdrv_wm_data.height;
+   }
+   if(lstrcmpA(type,"bpp"))
+   {
+       printf("LoadMetrics - returning bpp\n");
+       return rdpdrv_wm_data.bpp;
+   }
+   printf("LoadMetrics called with malformed argument, doing nothing\n");
+   return 1;
+}
+
 /*****************************************************************************/
 int
 xrdp_wm_init(struct xrdp_wm *self)
 {
-    int fd;
+    int fd, fucking_bpp2;
     int index;
     struct list *names;
     struct list *values;
@@ -649,6 +672,17 @@ xrdp_wm_init(struct xrdp_wm *self)
     g_writeln("in xrdp_wm_init: ");
 
     load_xrdp_config(self->xrdp_config, self->screen->bpp);
+
+            rdpdrv_wm_data.width = self->session->client_info->width;
+            rdpdrv_wm_data.height = self->session->client_info->height;
+            rdpdrv_wm_data.bpp = self->session->client_info->bpp;
+
+          printf("termsv width %d\n", self->session->client_info->width);
+          printf("termsv height %d\n", self->session->client_info->height);
+          printf("termsv bpp %d\n", self->session->client_info->bpp);
+
+    fucking_bpp2 = LoadMetrics("bpp");
+    printf("fucking bpp2 %d\n, fucking_bpp2");
 
     xrdp_wm_load_static_colors_plus(self, autorun_name);
     xrdp_wm_load_static_pointers(self);
@@ -813,8 +847,8 @@ xrdp_wm_init(struct xrdp_wm *self)
         //termsv_msg_pipe("termsv_send_msg_pipe: from RDP_create_desktop");
         termsv_shm_msg("termsv_shm_msg: This Message from termsv.exe.so process");
 	
-	//TermsvCreateWindow(self);
-	//TermsvCreateChildWindow(self);
+	TermsvCreateWindow(self);
+	TermsvCreateChildWindow(self);
 
 
         //HMODULE driver = LoadLibraryA( "winerdp.dll" );
@@ -822,8 +856,8 @@ xrdp_wm_init(struct xrdp_wm *self)
         if (driver)
         {
 	    printf("winedrp.dll was loaded\n");
-	    int width=1280, height=960;
-            //BOOL (CDECL *create_desktop_func)(unsigned int, unsigned int);
+	    int width=640, height=480;
+            BOOL (WINAPI *create_desktop_func)(struct xrdp_wm *self, unsigned int, unsigned int);
 	    BOOL (WINAPI *pDllMain)(int, int, int);
             pDllMain  = (void *)GetProcAddress( driver, "DllMain" );
 
@@ -834,17 +868,17 @@ xrdp_wm_init(struct xrdp_wm *self)
                 //create_desktop_func( width, height );
             }
 
-            //create_desktop_func = (void *)GetProcAddress( driver, "wine_create_desktop" );
-            //if (create_desktop_func)
-            //{
-            //    printf("Attempting to call wine_create_desktop in the RDP driver\n");
-            //    create_desktop_func( width, height );
-            //}
+            create_desktop_func = (void *)GetProcAddress( driver, "wine_create_desktop" );
+        //    if (create_desktop_func)
+        //    {
+        //        printf("Attempting to call wine_create_desktop in the RDP driver\n");
+        //        create_desktop_func( self, width, height );
+        //        printf("called wine_create_desktop in the RDP driver\n");
+        //    }
             //FreeLibrary( driver );
         }
-	TermsvCreateWindow(self);
+	//TermsvCreateWindow(self);
 
-	printf("CreateDesktop should go herei\n");
         /* clear screen */
         xrdp_bitmap_invalidate(self->screen, 0);
         //xrdp_wm_set_focused(self, self->login_window);

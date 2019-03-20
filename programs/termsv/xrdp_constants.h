@@ -610,7 +610,8 @@
 /* used for RDPDR */
 #define STATUS_SUCCESS                 0x00000000
 
-#ifndef STATUS_PENDING
+#ifdef STATUS_PENDING
+#undef STATUS_PENDING
 #define STATUS_PENDING                 0x00000103
 #endif
 
@@ -620,8 +621,11 @@
 #define STATUS_DEVICE_OFF_LINE         0x80000010
 #define STATUS_DEVICE_BUSY             0x80000011
 
+#ifdef STATUS_INVALID_HANDLE
 #undef STATUS_INVALID_HANDLE
 #define STATUS_INVALID_HANDLE          0xc0000008
+#endif
+
 #define STATUS_INVALID_PARAMETER       0xc000000d
 #define STATUS_NO_SUCH_FILE            0xc000000f
 #define STATUS_INVALID_DEVICE_REQUEST  0xc0000010
@@ -630,8 +634,10 @@
 #define STATUS_DISK_FULL               0xc000007f
 #define STATUS_FILE_IS_A_DIRECTORY     0xc00000ba
 #define STATUS_NOT_SUPPORTED           0xc00000bb
+#ifdef STATUS_TIMEOUT
 #undef STATUS_TIMEOUT
 #define STATUS_TIMEOUT                 0xc0000102
+#endif
 #define STATUS_CANCELLED               0xc0000120
 
 /* MS-SMB2 2.2.13 */
