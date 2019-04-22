@@ -60,13 +60,16 @@ static const WCHAR InstallRunOnce[] = {
    'I','n','s','t','a','l','l','e','r','\\',
    'R','u','n','O','n','c','e','E','n','t','r','i','e','s',0};
 
+static const WCHAR MsiDll[] = {
+   'm','s','i','.','d','l','l',0};
+
 static void ShowUsage(int ExitCode)
 {
     WCHAR msiexec_version[40];
     WCHAR filename[MAX_PATH];
     LPWSTR msi_res;
     LPWSTR msiexec_help;
-    HMODULE hmsi = GetModuleHandleA("msi.dll");
+    HMODULE hmsi = GetModuleHandleW((void *)MsiDll);
     DWORD len;
     DWORD res;
 

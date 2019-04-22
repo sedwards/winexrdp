@@ -1,0 +1,6 @@
+MODULE    = pipe-srv.exe
+APPMODE   = -mconsole
+IMPORTS   = kernel32 
+
+C_SRCS = \
+	pipe-srv.c

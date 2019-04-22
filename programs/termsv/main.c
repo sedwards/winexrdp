@@ -18,16 +18,18 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#include <windows.h>
+#include <windef.h>
+#include <winbase.h>
+#include <winnt.h>
 #include <winsvc.h>
-#include "wine/debug.h"
+#include <wine/debug.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(termsv);
-
 static WCHAR termserviceW[] = {'T','e','r','m','S','e','r','v','i','c','e',0};
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
+BOOL TERMSV_Initialize(void);
 
 static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_data, LPVOID context )
 {
@@ -64,6 +66,8 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 
     WINE_TRACE( "starting service\n" );
 
+    //if (!TERMSV_Initialize()) return;
+
     stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
 
     service_handle = RegisterServiceCtrlHandlerExW( termserviceW, service_handler, NULL );
@@ -87,7 +91,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     WINE_TRACE( "service stopped\n" );
 }
 
-int wmain( int argc, WCHAR *argv[] )
+int twmain( int argc, WCHAR *argv[] )
 {
     static const SERVICE_TABLE_ENTRYW service_table[] =
     {
@@ -98,3 +102,86 @@ int wmain( int argc, WCHAR *argv[] )
     StartServiceCtrlDispatcherW( service_table );
     return 0;
 }
+
+/*****************************************************************************/
+long
+g_load_library(char *in)
+{
+    return (long)LoadLibraryA(in);
+}
+
+/*****************************************************************************/
+int
+g_free_library(long lib)
+{
+    if (lib == 0)
+    {
+        return 0;
+    }
+
+    return FreeLibrary((HMODULE)lib);
+}
+
+/*****************************************************************************/
+/* returns NULL if not found */
+void *
+g_get_proc_address(long lib, const char *name)
+{
+    if (lib == 0)
+    {
+        return 0;
+    }
+
+    return GetProcAddress((HMODULE)lib, name);
+}
+
+int
+tc_thread_create(unsigned long (__stdcall *start_routine)(void *), void *arg)
+{
+    int rv = 0;
+    DWORD thread_id = 0;
+    HANDLE thread = (HANDLE)0;
+
+    /* CreateThread returns handle or zero on error */
+    thread = CreateThread(0, 0, start_routine, arg, 0, &thread_id);
+    rv = !thread;
+    CloseHandle(thread);
+    return rv;
+}
+
+typedef signed __int64 intptr_t;
+typedef intptr_t intptr_t;
+
+/*****************************************************************************/
+intptr_t
+tc_sem_create(int init_count)
+{
+    HANDLE sem;
+
+    sem = CreateSemaphoreW(0, init_count, init_count + 10, 0);
+    return (intptr_t)sem;
+}
+
+/*****************************************************************************/
+void
+tc_sem_delete(intptr_t sem)
+{
+    CloseHandle((HANDLE)sem);
+}
+
+/*****************************************************************************/
+int
+tc_sem_dec(intptr_t sem)
+{
+    WaitForSingleObject((HANDLE)sem, INFINITE);
+    return 0;
+}
+
+/*****************************************************************************/
+int
+tc_sem_inc(intptr_t sem)
+{
+    ReleaseSemaphore((HANDLE)sem, 1, 0);
+    return 0;
+}
+

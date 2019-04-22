@@ -1,0 +1,4 @@
+NewTestHWND ID is: (nil)
+ConsoleHWND ID is: (nil)
+New Window Title: 
+New Window Title: 40768094/84
