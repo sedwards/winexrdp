@@ -70,7 +70,7 @@ xrdp_process_delete(struct xrdp_process *self)
     g_delete_wait_obj(self->self_term_event);
     libxrdp_exit(self->session);
     xrdp_wm_delete(self->wm);
-    trans_delete(self->server_trans);
+    rdp_trans_delete(self->server_trans);
     g_free(self);
 }
 #if 0
@@ -307,7 +307,7 @@ xrdp_process_main_loop(struct xrdp_process *self)
     self->server_trans->extra_flags = 0;
     self->server_trans->header_size = 0;
     self->server_trans->no_stream_init_on_data_in = 1;
-    self->server_trans->trans_data_in = xrdp_process_data_in;
+    self->server_trans->rdp_trans_data_in = xrdp_process_data_in;
     self->server_trans->callback_data = self;
     init_stream(self->server_trans->in_s, 8192 * 4);
     self->session = libxrdp_init((intptr_t)self, self->server_trans);
@@ -335,7 +335,7 @@ xrdp_process_main_loop(struct xrdp_process *self)
             robjs[robjs_count++] = self->self_term_event;
             xrdp_wm_get_wait_objs(self->wm, robjs, &robjs_count,
                                   wobjs, &wobjs_count, &timeout);
-            trans_get_wait_objs_rw(self->server_trans, robjs, &robjs_count,
+            rdp_trans_get_wait_objs_rw(self->server_trans, robjs, &robjs_count,
                                    wobjs, &wobjs_count, &timeout);
             /* wait */
             if (g_obj_wait(robjs, robjs_count, wobjs, wobjs_count, timeout) != 0)
@@ -359,7 +359,7 @@ xrdp_process_main_loop(struct xrdp_process *self)
                 break;
             }
 
-            if (trans_check_wait_objs(self->server_trans) != 0)
+            if (rdp_trans_check_wait_objs(self->server_trans) != 0)
             {
                 break;
             }

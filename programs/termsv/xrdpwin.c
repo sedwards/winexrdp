@@ -18,7 +18,6 @@
  * main program
  */
 
-#if 0
 #if defined(HAVE_CONFIG_H)
 #include <config_ac.h>
 #endif
@@ -52,126 +51,16 @@ static long g_sync_param1 = 0;
 static long g_sync_param2 = 0;
 static long (*g_sync_func)(long param1, long param2);
 
-/*****************************************************************************/
-long
-g_xrdp_sync(long (*sync_func)(long param1, long param2), long sync_param1,
-            long sync_param2)
-{
-    long sync_result;
-    int sync_command;
-
-    if (tc_threadid_equal(tc_get_threadid(), g_threadid))
-    {
-        /* this is the main thread, call the function directly */
-        sync_result = sync_func(sync_param1, sync_param2);
-    }
-    else
-    {
-        tc_mutex_lock(g_sync1_mutex);
-        tc_mutex_lock(g_sync_mutex);
-        g_sync_param1 = sync_param1;
-        g_sync_param2 = sync_param2;
-        g_sync_func = sync_func;
-        g_sync_command = 100;
-        tc_mutex_unlock(g_sync_mutex);
-        g_set_wait_obj(g_sync_event);
-
-        do
-        {
-            g_sleep(100);
-            tc_mutex_lock(g_sync_mutex);
-            sync_command = g_sync_command;
-            sync_result = g_sync_result;
-            tc_mutex_unlock(g_sync_mutex);
-        }
-        while (sync_command != 0);
-
-        tc_mutex_unlock(g_sync1_mutex);
-    }
-
-    return sync_result;
-}
+void pipe_sig(int sig_num);
 
 /*****************************************************************************/
-void
-xrdp_shutdown(int sig)
-{
-    intptr_t threadid;
-
-    threadid = tc_get_threadid();
-    g_writeln("shutting down");
-    g_writeln("signal %d threadid %p", sig, threadid);
-
-    if (!g_is_wait_obj_set(g_term_event))
-    {
-        g_set_wait_obj(g_term_event);
-    }
-}
-
-/*****************************************************************************/
-int
-g_is_term(void)
-{
-    return g_is_wait_obj_set(g_term_event);
-}
-
-/*****************************************************************************/
-void
-g_set_term(int in_val)
-{
-    if (in_val)
-    {
-        g_set_wait_obj(g_term_event);
-    }
-    else
-    {
-        g_reset_wait_obj(g_term_event);
-    }
-}
-
-/*****************************************************************************/
-intptr_t
-g_get_term_event(void)
-{
-    return g_term_event;
-}
-
-/*****************************************************************************/
-intptr_t
-g_get_sync_event(void)
-{
-    return g_sync_event;
-}
-
-/*****************************************************************************/
-void
-pipe_sig(int sig_num)
-{
-    /* do nothing */
-    g_writeln("got XRDP WIN SIGPIPE(%d)", sig_num);
-}
-
-/*****************************************************************************/
-void
-g_process_waiting_function(void)
-{
-    tc_mutex_lock(g_sync_mutex);
-
-    if (g_sync_command != 0)
-    {
-        if (g_sync_func != 0)
-        {
-            if (g_sync_command == 100)
-            {
-                g_sync_result = g_sync_func(g_sync_param1, g_sync_param2);
-            }
-        }
-
-        g_sync_command = 0;
-    }
-
-    tc_mutex_unlock(g_sync_mutex);
-}
+long g_xrdp_sync(long (*sync_func)(long param1, long param2), long sync_param1, long sync_param2);
+void xrdp_shutdown(int sig);
+int g_is_term(void);
+void g_set_term(int in_val);
+intptr_t g_get_term_event(void);
+intptr_t g_get_sync_event(void);
+void g_process_waiting_function(void);
 
 /* helper function to update service status */
 static void set_service_status( SERVICE_STATUS_HANDLE handle, DWORD state, DWORD accepted )
@@ -283,7 +172,7 @@ static void WINAPI MyServiceMain( DWORD argc, LPWSTR *argv )
 /*****************************************************************************/
 //int
 //main(int argc, char **argv)
-int wmain(int argc, WCHAR *argv[])
+int wwmain(int argc, WCHAR *argv[])
 {
     int test;
     int host_be;
@@ -295,45 +184,6 @@ int wmain(int argc, WCHAR *argv[])
 
     g_init("dummy");
     ssl_init();
-    /* check compiled endian with actual endian */
-    test = 1;
-    host_be = !((int)(*(unsigned char *)(&test)));
-#if defined(B_ENDIAN)
-
-    if (!host_be)
-#endif
-#if defined(L_ENDIAN)
-        if (host_be)
-#endif
-        {
-            g_writeln("endian wrong, edit arch.h");
-            return 0;
-        }
-
-    /* check long, int and void* sizes */
-    if (sizeof(int) != 4)
-    {
-        g_writeln("unusable int size, must be 4");
-        return 0;
-    }
-
-    if (sizeof(long) != sizeof(void *))
-    {
-        g_writeln("long size must match void* size");
-        return 0;
-    }
-
-    if (sizeof(long) != 4 && sizeof(long) != 8)
-    {
-        g_writeln("unusable long size, must be 4 or 8");
-        return 0;
-    }
-
-    if (sizeof(tui64) != 8)
-    {
-        g_writeln("unusable tui64 size, must be 8");
-        return 0;
-    }
 
     run_as_service = 1;
 
@@ -458,26 +308,15 @@ int wmain(int argc, WCHAR *argv[])
     //g_snprintf(text, 255, "xrdp_%8.8x_main_sync", pid);
     //g_sync_event = g_create_wait_obj(text);
 
-    //if (g_term_event == 0)
-    //{
-    //    g_writeln("error creating g_term_event");
-    //}
-
     xrdp_listen_main_loop(g_listen);
     xrdp_listen_delete(g_listen);
     tc_mutex_delete(g_sync_mutex);
     tc_mutex_delete(g_sync1_mutex);
     g_delete_wait_obj(g_term_event);
     g_delete_wait_obj(g_sync_event);
-//#if defined(_WIN32)
     /* I don't think it ever gets here */
     /* when running in win32 app mode, control c exits right away */
     WSACleanup();
-//#else
-//    /* delete the xrdp.pid file */
-//    g_file_delete(pid_file);
-//#endif
     return 0;
 }
-#endif
 

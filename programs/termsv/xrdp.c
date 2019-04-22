@@ -18,15 +18,48 @@
  * main program
  */
 
-#if defined(HAVE_CONFIG_H)
-#include <config_ac.h>
-#endif
+#define USE_WS_PREFIX
+
+#include "windows.h"
+#include "winsock2.h"
+#include "ws2tcpip.h"
+#include "iphlpapi.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <icmpapi.h>
+#include <limits.h>
+#include <unistd.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <dlfcn.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <time.h>
+#include <grp.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <locale.h>
 
 #include "xrdp.h"
 
 #define THREAD_WAITING 100
 
-typedef short BOOL;
 
 static struct xrdp_listen *g_listen = 0;
 static long g_threadid = 0; /* main threadid */
@@ -182,7 +215,7 @@ void
 pipe_sig(int sig_num)
 {
     /* do nothing */
-    g_writeln("got XRDP SIGPIPE(%d)", sig_num);
+   g_writeln("got XRDP SIGPIPE(%d)", sig_num);
 }
 
 /*****************************************************************************/
@@ -346,12 +379,14 @@ xrdp_sanity_check(void)
         return 1;
     }
 
+#if 0    
     g_snprintf(key_file, 255, "%s/rsakeys.ini", XRDP_CFG_PATH);
     if (!g_file_exist(key_file))
     {
         g_writeln("File %s is missing, create it using xrdp-keygen", key_file);
         return 1;
     }
+#endif
 
     return 0;
 }
@@ -379,6 +414,7 @@ int wmain(int argc, WCHAR *argv[])
     int no_daemon;
     char text[256];
     char pid_file[256];
+    WSADATA w;
 
     g_init("xrdp");
     ssl_init();
@@ -610,6 +646,8 @@ int wmain(int argc, WCHAR *argv[])
     }
 #endif
 // sedwards
+    WSAStartup(2, &w);
+
     g_threadid = tc_get_threadid();
     g_listen = xrdp_listen_create();
     g_signal_user_interrupt(xrdp_shutdown); /* SIGINT */
@@ -628,15 +666,18 @@ int wmain(int argc, WCHAR *argv[])
         g_writeln("error creating g_term_event");
     }
 
+    log_message(LOG_LEVEL_INFO, "2 starting xrdp with pid %d", pid);
     g_snprintf(text, 255, "xrdp_%8.8x_main_sync", pid);
     g_sync_event = g_create_wait_obj(text);
 
+    log_message(LOG_LEVEL_INFO, "3 starting xrdp with pid %d", pid);
     if (g_sync_event == 0)
     {
         g_writeln("error creating g_sync_event");
     }
 
     g_listen->startup_params = startup_params;
+    log_message(LOG_LEVEL_INFO, "4 starting xrdp with pid %d", pid);
     exit_status = xrdp_listen_main_loop(g_listen);
     xrdp_listen_delete(g_listen);
     tc_mutex_delete(g_sync_mutex);
@@ -654,6 +695,8 @@ int wmain(int argc, WCHAR *argv[])
     g_free(startup_params);
     log_end();
     g_deinit();
+
+    WSACleanup();
 
     if (exit_status == 0)
     {

@@ -21,7 +21,7 @@
 #if !defined(TRANS_H)
 #define TRANS_H
 
-//#include "arch.h"
+#include "arch.h"
 #include "parse.h"
 
 #define TRANS_MODE_TCP 1
@@ -35,16 +35,17 @@
 #define TRANS_STATUS_DOWN 0
 #define TRANS_STATUS_UP 1
 
+
 struct trans; /* forward declaration */
 struct xrdp_tls;
 
-typedef int (*ttrans_data_in)(struct trans* self);
-typedef int (*ttrans_conn_in)(struct trans* self,
+typedef int (*trdp_trans_data_in)(struct trans* self);
+typedef int (*trdp_trans_conn_in)(struct trans* self,
                                          struct trans* new_self);
 typedef int (*tis_term)(void);
-typedef int (*trans_recv_proc) (struct trans *self, char *ptr, int len);
-typedef int (*trans_send_proc) (struct trans *self, const char *data, int len);
-typedef int (*trans_can_recv_proc) (struct trans *self, int sck, int millis);
+typedef int (*rdp_trans_recv_proc) (struct trans *self, char *ptr, int len);
+typedef int (*rdp_trans_send_proc) (struct trans *self, const char *data, int len);
+typedef int (*rdp_trans_can_recv_proc) (struct trans *self, int sck, int millis);
 
 /* optional source info */
 
@@ -66,8 +67,8 @@ struct trans
     int mode; /* 1 tcp, 2 unix socket, 3 vsock */
     int status;
     int type1; /* 1 listener 2 server 3 client */
-    ttrans_data_in trans_data_in;
-    ttrans_conn_in trans_conn_in;
+    trdp_trans_data_in rdp_trans_data_in;
+    trdp_trans_conn_in rdp_trans_conn_in;
     void* callback_data;
     int header_size;
     struct stream* in_s;
@@ -82,54 +83,54 @@ struct trans
     struct ssl_tls *tls;
     const char *ssl_protocol; /* e.g. TLSv1, TLSv1.1, TLSv1.2, unknown */
     const char *cipher_name;  /* e.g. AES256-GCM-SHA384 */
-    trans_recv_proc trans_recv;
-    trans_send_proc trans_send;
-    trans_can_recv_proc trans_can_recv;
+    rdp_trans_recv_proc rdp_trans_recv;
+    rdp_trans_send_proc rdp_trans_send;
+    rdp_trans_can_recv_proc rdp_trans_can_recv;
     struct source_info *si;
     int my_source;
 };
 
 struct trans*
-trans_create(int mode, int in_size, int out_size);
+rdp_trans_create(int mode, int in_size, int out_size);
 void
-trans_delete(struct trans* self);
+rdp_trans_delete(struct trans* self);
 int
-trans_get_wait_objs(struct trans* self, intptr_t* objs, int* count);
+rdp_trans_get_wait_objs(struct trans* self, intptr_t* objs, int* count);
 int
-trans_get_wait_objs_rw(struct trans *self,
+rdp_trans_get_wait_objs_rw(struct trans *self,
                        intptr_t *robjs, int *rcount,
                        intptr_t *wobjs, int *wcount, int *timeout);
 int
-trans_check_wait_objs(struct trans* self);
+rdp_trans_check_wait_objs(struct trans* self);
 int
-trans_force_read_s(struct trans* self, struct stream* in_s, int size);
+rdp_trans_force_read_s(struct trans* self, struct stream* in_s, int size);
 int
-trans_force_write_s(struct trans* self, struct stream* out_s);
+rdp_trans_force_write_s(struct trans* self, struct stream* out_s);
 int
-trans_force_read(struct trans* self, int size);
+rdp_trans_force_read(struct trans* self, int size);
 int
-trans_force_write(struct trans* self);
+rdp_trans_force_write(struct trans* self);
 int
-trans_write_copy(struct trans* self);
+rdp_trans_write_copy(struct trans* self);
 int
-trans_write_copy_s(struct trans* self, struct stream* out_s);
+rdp_trans_write_copy_s(struct trans* self, struct stream* out_s);
 int
-trans_connect(struct trans* self, const char* server, const char* port,
+rdp_trans_connect(struct trans* self, const char* server, const char* port,
               int timeout);
 int
-trans_listen_address(struct trans* self, char* port, const char* address);
+rdp_trans_listen_address(struct trans* self, char* port, const char* address);
 int
-trans_listen(struct trans* self, char* port);
+rdp_trans_listen(struct trans* self, char* port);
 struct stream*
-trans_get_in_s(struct trans* self);
+rdp_trans_get_in_s(struct trans* self);
 struct stream*
-trans_get_out_s(struct trans* self, int size);
+rdp_trans_get_out_s(struct trans* self, int size);
 int
-trans_set_tls_mode(struct trans *self, const char *key, const char *cert,
+rdp_trans_set_tls_mode(struct trans *self, const char *key, const char *cert,
                    long ssl_protocols, const char *tls_ciphers);
 int
-trans_shutdown_tls_mode(struct trans *self);
+rdp_trans_shutdown_tls_mode(struct trans *self);
 int
-trans_tcp_force_read_s(struct trans *self, struct stream *in_s, int size);
+rdp_trans_tcp_force_read_s(struct trans *self, struct stream *in_s, int size);
 
 #endif

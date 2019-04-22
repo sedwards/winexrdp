@@ -25,42 +25,36 @@
    To test for Linux use __linux__.
    To test for BSD use BSD */
 
-#if defined(HAVE_CONFIG_H)
-#include "config_ac.h"
-#endif
-#if defined(_WIN32)
-#include <windows.h>
-#include <winsock.h>
-#else
-/* fix for solaris 10 with gcc 3.3.2 problem */
-#if defined(sun) || defined(__sun)
-#define ctid_t id_t
-#endif
+#define USE_WS_PREFIX
+
+#include "windows.h"
+#include "winsock2.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 #include <unistd.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#if defined(XRDP_ENABLE_VSOCK)
-#include <linux/vm_sockets.h>
-#endif
-#include <sys/un.h>
+#include <netinet/in.h>
+
+#define _WIN32
+
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <dlfcn.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <time.h>
 #include <grp.h>
-#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -89,19 +83,27 @@ extern char **environ;
 #include <linux/unistd.h>
 #endif
 
-/* sys/ucred.h needs to be included to use struct xucred
- * in FreeBSD and OS X. No need for other BSDs except GNU/kFreeBSD */
-#if defined(__FreeBSD__) || defined(__APPLE__) || defined(__FreeBSD_kernel__)
-#include <sys/ucred.h>
-#endif
-
 /* for solaris */
-#if !defined(PF_LOCAL)
-#define PF_LOCAL AF_UNIX
-#endif
+//#if !defined(PF_LOCAL)
+//#define PF_LOCAL AF_UNIX
+//#endif
 #if !defined(INADDR_NONE)
 #define INADDR_NONE ((unsigned long)-1)
 #endif
+
+char* __cdecl rdp_strncpy(char *dst, const char *src, size_t len)
+{
+    size_t i;
+
+    for(i=0; i<len; i++)
+        if((dst[i] = src[i]) == '\0') break;
+
+    while (i < len) dst[i++] = 0;
+
+    return dst;
+}
+
+
 
 /*****************************************************************************/
 int
@@ -345,7 +347,7 @@ g_tcp_set_no_delay(int sck)
     option_len = sizeof(option_value);
 
     /* SOL_TCP IPPROTO_TCP */
-    if (getsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char *)&option_value,
+    if (getsockopt(sck, WS_IPPROTO_TCP, WS_TCP_NODELAY, (char *)&option_value,
                    &option_len) == 0)
     {
         if (option_value == 0)
@@ -353,7 +355,7 @@ g_tcp_set_no_delay(int sck)
             option_value = 1;
             option_len = sizeof(option_value);
 
-            if (setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char *)&option_value,
+            if (setsockopt(sck, WS_IPPROTO_TCP, WS_TCP_NODELAY, (char *)&option_value,
                            option_len) == 0)
             {
                 ret = 0; /* success */
@@ -384,7 +386,7 @@ g_tcp_set_keepalive(int sck)
     option_len = sizeof(option_value);
 
     /* SOL_TCP IPPROTO_TCP */
-    if (getsockopt(sck, SOL_SOCKET, SO_KEEPALIVE, (char *)&option_value,
+    if (getsockopt(sck, WS_SOL_SOCKET, WS_SO_KEEPALIVE, (char *)&option_value,
                    &option_len) == 0)
     {
         if (option_value == 0)
@@ -392,7 +394,7 @@ g_tcp_set_keepalive(int sck)
             option_value = 1;
             option_len = sizeof(option_value);
 
-            if (setsockopt(sck, SOL_SOCKET, SO_KEEPALIVE, (char *)&option_value,
+            if (setsockopt(sck, WS_SOL_SOCKET, WS_SO_KEEPALIVE, (char *)&option_value,
                            option_len) == 0)
             {
                 ret = 0; /* success */
@@ -421,84 +423,47 @@ g_tcp_socket(void)
     int option_value;
     socklen_t option_len;
 
-#if defined(XRDP_ENABLE_IPV6)
-    rv = (int)socket(AF_INET6, SOCK_STREAM, 0);
+    rv = (int)socket(WS_AF_INET, WS_SOCK_STREAM, IPPROTO_TCP);
+ #if 0
     if (rv < 0)
     {
-        switch (errno)
-        {
-            case EAFNOSUPPORT: /* if IPv6 not supported, retry IPv4 */
-                log_message(LOG_LEVEL_INFO, "IPv6 not supported, falling back to IPv4");
-                rv = (int)socket(AF_INET, SOCK_STREAM, 0);
-                break;
-
-            default:
-                log_message(LOG_LEVEL_ERROR, "g_tcp_socket: %s", g_get_strerror());
-                return -1;
-        }
-    }
-#else
-    rv = (int)socket(AF_INET, SOCK_STREAM, 0);
-#endif
-    if (rv < 0)
-    {
-        log_message(LOG_LEVEL_ERROR, "g_tcp_socket: %s", g_get_strerror());
+        log_message(LOG_LEVEL_INFO, "my g_tcp_socket: %s", g_get_strerror());
         return -1;
     }
-#if defined(XRDP_ENABLE_IPV6)
+    option_value = 0;
+  #if 0
     option_len = sizeof(option_value);
-    if (getsockopt(rv, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&option_value,
-                   &option_len) == 0)
-    {
-        if (option_value != 0)
-        {
-#if defined(XRDP_ENABLE_IPV6ONLY)
-            option_value = 1;
-#else
-            option_value = 0;
-#endif
-            option_len = sizeof(option_value);
-            if (setsockopt(rv, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&option_value,
-                       option_len) < 0)
-            {
-                log_message(LOG_LEVEL_ERROR, "g_tcp_socket: setsockopt() failed");
-            }
-        }
-    }
-#endif
-    option_len = sizeof(option_value);
-    if (getsockopt(rv, SOL_SOCKET, SO_REUSEADDR, (char *)&option_value,
+    if (getsockopt(rv, WS_SOL_SOCKET, WS_SO_REUSEADDR, (char *)&option_value,
                    &option_len) == 0)
     {
         if (option_value == 0)
         {
             option_value = 1;
             option_len = sizeof(option_value);
-            if (setsockopt(rv, SOL_SOCKET, SO_REUSEADDR, (char *)&option_value,
+            if (setsockopt(rv, WS_SOL_SOCKET, WS_SO_REUSEADDR, (char *)&option_value,
                        option_len) < 0)
             {
-                log_message(LOG_LEVEL_ERROR, "g_tcp_socket: setsockopt() failed");
+                log_message(LOG_LEVEL_INFO, "g_tcp_socket: setsockopt() failed");
             }
         }
     }
-
+  #endif
     option_len = sizeof(option_value);
-
-    if (getsockopt(rv, SOL_SOCKET, SO_SNDBUF, (char *)&option_value,
+    if (getsockopt(rv, WS_SOL_SOCKET, WS_SO_SNDBUF, (char *)&option_value,
                    &option_len) == 0)
     {
         if (option_value < (1024 * 32))
         {
             option_value = 1024 * 32;
             option_len = sizeof(option_value);
-            if (setsockopt(rv, SOL_SOCKET, SO_SNDBUF, (char *)&option_value,
+            if (setsockopt(rv, WS_SOL_SOCKET, WS_SO_SNDBUF, (char *)&option_value,
                        option_len) < 0)
             {
-                log_message(LOG_LEVEL_ERROR, "g_tcp_socket: setsockopt() failed");
+                log_message(LOG_LEVEL_INFO, "g_tcp_socket: setsockopt() failed");
             }
         }
     }
-
+#endif
     return rv;
 }
 
@@ -512,7 +477,7 @@ g_sck_set_send_buffer_bytes(int sck, int bytes)
 
     option_value = bytes;
     option_len = sizeof(option_value);
-    if (setsockopt(sck, SOL_SOCKET, SO_SNDBUF, (char *)&option_value,
+    if (setsockopt(sck, WS_SOL_SOCKET, WS_SO_SNDBUF, (char *)&option_value,
                    option_len) != 0)
     {
         return 1;
@@ -530,7 +495,7 @@ g_sck_get_send_buffer_bytes(int sck, int *bytes)
 
     option_value = 0;
     option_len = sizeof(option_value);
-    if (getsockopt(sck, SOL_SOCKET, SO_SNDBUF, (char *)&option_value,
+    if (getsockopt(sck, WS_SOL_SOCKET, WS_SO_SNDBUF, (char *)&option_value,
                    &option_len) != 0)
     {
         return 1;
@@ -549,7 +514,7 @@ g_sck_set_recv_buffer_bytes(int sck, int bytes)
 
     option_value = bytes;
     option_len = sizeof(option_value);
-    if (setsockopt(sck, SOL_SOCKET, SO_RCVBUF, (char *)&option_value,
+    if (setsockopt(sck, WS_SOL_SOCKET, WS_SO_RCVBUF, (char *)&option_value,
                    option_len) != 0)
     {
         return 1;
@@ -567,7 +532,7 @@ g_sck_get_recv_buffer_bytes(int sck, int *bytes)
 
     option_value = 0;
     option_len = sizeof(option_value);
-    if (getsockopt(sck, SOL_SOCKET, SO_RCVBUF, (char *)&option_value,
+    if (getsockopt(sck, WS_SOL_SOCKET, WS_SO_RCVBUF, (char *)&option_value,
                    &option_len) != 0)
     {
         return 1;
@@ -580,22 +545,22 @@ g_sck_get_recv_buffer_bytes(int sck, int *bytes)
 int
 g_sck_local_socket(void)
 {
-#if defined(_WIN32)
+//#if defined(_WIN32)
     return -1;
-#else
-    return socket(PF_LOCAL, SOCK_STREAM, 0);
-#endif
+//#else
+//    return socket(PF_LOCAL, SOCK_STREAM, 0);
+//#endif
 }
 
 /*****************************************************************************/
 int
 g_sck_vsock_socket(void)
 {
-#if defined(XRDP_ENABLE_VSOCK)
-    return socket(PF_VSOCK, SOCK_STREAM, 0);
-#else
+//#if defined(XRDP_ENABLE_VSOCK)
+//    return socket(PF_VSOCK, SOCK_STREAM, 0);
+//#else
     return -1;
-#endif
+//#endif
 }
 
 /*****************************************************************************/
@@ -603,7 +568,7 @@ g_sck_vsock_socket(void)
 int
 g_sck_get_peer_cred(int sck, int *pid, int *uid, int *gid)
 {
-#if defined(SO_PEERCRED)
+#if defined(WS_SO_PEERCRED)
     socklen_t ucred_length;
     struct myucred
     {
@@ -613,7 +578,7 @@ g_sck_get_peer_cred(int sck, int *pid, int *uid, int *gid)
     } credentials;
 
     ucred_length = sizeof(credentials);
-    if (getsockopt(sck, SOL_SOCKET, SO_PEERCRED, &credentials, &ucred_length))
+    if (getsockopt(sck, WS_SOL_SOCKET, WS_SO_PEERCRED, &credentials, &ucred_length))
     {
         return 1;
     }
@@ -636,7 +601,7 @@ g_sck_get_peer_cred(int sck, int *pid, int *uid, int *gid)
     unsigned int xucred_length;
     xucred_length = sizeof(xucred);
 
-    if (getsockopt(sck, SOL_SOCKET, LOCAL_PEERCRED, &xucred, &xucred_length))
+    if (getsockopt(sck, WS_SOL_SOCKET, LOCAL_PEERCRED, &xucred, &xucred_length))
     {
             return 1;
     }
@@ -684,11 +649,11 @@ g_sck_close(int sck)
     {
         switch (sock_info.sock_addr.sa_family)
         {
-            case AF_INET:
+            case WS_AF_INET:
             {
                 struct sockaddr_in *sock_addr_in = &sock_info.sock_addr_in;
 
-                g_snprintf(sockname, sizeof(sockname), "AF_INET %s:%d",
+                g_snprintf(sockname, sizeof(sockname), "WS_AF_INET %s:%d",
                            inet_ntoa(sock_addr_in->sin_addr),
                            ntohs(sock_addr_in->sin_port));
                 break;
@@ -696,12 +661,12 @@ g_sck_close(int sck)
 
 #if defined(XRDP_ENABLE_IPV6)
 
-            case AF_INET6:
+            case WS_AF_INET6:
             {
                 char addr[48];
                 struct sockaddr_in6 *sock_addr_in6 = &sock_info.sock_addr_in6;
 
-                g_snprintf(sockname, sizeof(sockname), "AF_INET6 %s port %d",
+                g_snprintf(sockname, sizeof(sockname), "WS_AF_INET6 %s port %d",
                            inet_ntop(sock_addr_in6->sin6_family,
                                      &sock_addr_in6->sin6_addr, addr, sizeof(addr)),
                            ntohs(sock_addr_in6->sin6_port));
@@ -774,7 +739,7 @@ connect_loopback(int sck, const char *port)
 
     // First IPv6
     g_memset(&sa, 0, sizeof(sa));
-    sa.sin6_family = AF_INET6;
+    sa.sin6_family = WS_AF_INET6;
     sa.sin6_addr = in6addr_loopback;             // IPv6 ::1
     sa.sin6_port = htons((tui16)atoi(port));
     res = connect(sck, (struct sockaddr*)&sa, sizeof(sa));
@@ -789,7 +754,7 @@ connect_loopback(int sck, const char *port)
 
     // else IPv4
     g_memset(&s, 0, sizeof(s));
-    s.sin_family = AF_INET;
+    s.sin_family = WS_AF_INET;
     s.sin_addr.s_addr = htonl(INADDR_LOOPBACK);  // IPv4 127.0.0.1
     s.sin_port = htons((tui16)atoi(port));
     res = connect(sck, (struct sockaddr*)&s, sizeof(s));
@@ -804,8 +769,8 @@ connect_loopback(int sck, const char *port)
 
     // else IPv6 with IPv4 address
     g_memset(&sa, 0, sizeof(sa));
-    sa.sin6_family = AF_INET6;
-    inet_pton(AF_INET6, "::FFFF:127.0.0.1", &sa.sin6_addr);
+    sa.sin6_family = WS_AF_INET6;
+    inet_pton(WS_AF_INET6, "::FFFF:127.0.0.1", &sa.sin6_addr);
     sa.sin6_port = htons((tui16)atoi(port));
     res = connect(sck, (struct sockaddr*)&sa, sizeof(sa));
     if (res == -1 && errno == EINPROGRESS)
@@ -839,7 +804,7 @@ g_tcp_connect(int sck, const char *address, const char *port)
     p.ai_socktype = SOCK_STREAM;
     p.ai_protocol = IPPROTO_TCP;
     p.ai_flags = AI_ADDRCONFIG | AI_V4MAPPED;
-    p.ai_family = AF_INET6;
+    p.ai_family = WS_AF_INET6;
     if (g_strcmp(address, "127.0.0.1") == 0)
     {
         return connect_loopback(sck, port);
@@ -886,9 +851,10 @@ g_tcp_connect(int sck, const char* address, const char* port)
     int res;
 
     g_memset(&s, 0, sizeof(struct sockaddr_in));
-    s.sin_family = AF_INET;
+    s.sin_family = WS_AF_INET;
     s.sin_port = htons((tui16)atoi(port));
     s.sin_addr.s_addr = inet_addr(address);
+ #if 0
     if (s.sin_addr.s_addr == INADDR_NONE)
     {
         h = gethostbyname(address);
@@ -906,15 +872,63 @@ g_tcp_connect(int sck, const char* address, const char* port)
             }
         }
     }
+ #endif
+
     res = connect(sck, (struct sockaddr*)&s, sizeof(struct sockaddr_in));
 
-    /* Mac OSX connect() returns -1 for already established connections */
-    if (res == -1 && errno == EISCONN)
-    {
-        res = 0;
-    }
+    ///* Mac OSX connect() returns -1 for already established connections */
+    //if (res == -1 && errno == WSAEISCONN)
+    //{
+    //    res = 0;
+    //}
 
     return res;
+}
+#endif
+
+#if 0
+// to fix above,
+int resolveHost(char* host, struct sockaddr_in *sockaddr)
+{
+  struct addrinfo hints, *res;
+  char addrstr[100];
+  void *ptr = 0;
+
+  memset(&hints, 0, sizeof (hints));
+  hints.ai_family = PF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags |= AI_CANONNAME;
+
+  int error = getaddrinfo(host, NULL, &hints, &res);
+  switch (error) {
+    default: // no error (error == 0)
+      break;
+    .
+    .
+    // all possible errors returned by getaddrinfo
+    .
+    .
+    .
+  }
+
+  while (res) {
+    inet_ntop (res->ai_family, res->ai_addr->sa_data, addrstr, 100);
+
+    switch (res->ai_family) {
+      case AF_INET:
+        ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+        break;
+      case AF_INET6:
+        // we don't support IPV6 at this time, if we did...
+        //ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
+        return 0;
+    }
+    inet_ntop (res->ai_family, ptr, addrstr, 100);
+    memcpy(sockaddr.sin_addr, ptr, sizeof(struct in_addr));
+
+    res = res->ai_next;
+  }
+  return 1;
 }
 #endif
 
@@ -930,7 +944,7 @@ g_sck_local_connect(int sck, const char *port)
 
     memset(&s, 0, sizeof(struct sockaddr_un));
     s.sun_family = AF_UNIX;
-    strncpy(s.sun_path, port, sizeof(s.sun_path));
+    rdp_strncpy(s.sun_path, port, sizeof(s.sun_path));
     s.sun_path[sizeof(s.sun_path) - 1] = 0;
 
     return connect(sck, (struct sockaddr *)&s, sizeof(struct sockaddr_un));
@@ -945,7 +959,7 @@ g_sck_set_non_blocking(int sck)
 
 #if defined(_WIN32)
     i = 1;
-    ioctlsocket(sck, FIONBIO, &i);
+    ioctlsocket(sck, WS_FIONBIO, &i);
 #else
     i = fcntl(sck, F_GETFL);
     i = i | O_NONBLOCK;
@@ -969,7 +983,7 @@ g_tcp_bind(int sck, const char *port)
 
     // First IPv6
     g_memset(&sa, 0, sizeof(sa));
-    sa.sin6_family = AF_INET6;
+    sa.sin6_family = WS_AF_INET6;
     sa.sin6_addr = in6addr_any;                 // IPv6 ::
     sa.sin6_port = htons((tui16)atoi(port));
     if (bind(sck, (struct sockaddr*)&sa, sizeof(sa)) == 0)
@@ -980,7 +994,7 @@ g_tcp_bind(int sck, const char *port)
 
     // else IPv4
     g_memset(&s, 0, sizeof(s));
-    s.sin_family = AF_INET;
+    s.sin_family = WS_AF_INET;
     s.sin_addr.s_addr = htonl(INADDR_ANY);     // IPv4 0.0.0.0
     s.sin_port = htons((tui16)atoi(port));
     if (bind(sck, (struct sockaddr*)&s, sizeof(s)) == 0)
@@ -1000,7 +1014,7 @@ g_tcp_bind(int sck, const char* port)
     struct sockaddr_in s;
 
     memset(&s, 0, sizeof(struct sockaddr_in));
-    s.sin_family = AF_INET;
+    s.sin_family = WS_AF_INET;
     s.sin_port = htons((tui16)atoi(port));
     s.sin_addr.s_addr = INADDR_ANY;
     return bind(sck, (struct sockaddr*)&s, sizeof(struct sockaddr_in));
@@ -1018,7 +1032,7 @@ g_sck_local_bind(int sck, const char *port)
 
     memset(&s, 0, sizeof(struct sockaddr_un));
     s.sun_family = AF_UNIX;
-    strncpy(s.sun_path, port, sizeof(s.sun_path));
+    rdp_strncpy(s.sun_path, port, sizeof(s.sun_path));
     s.sun_path[sizeof(s.sun_path) - 1] = 0;
 
     return bind(sck, (struct sockaddr *)&s, sizeof(struct sockaddr_un));
@@ -1056,7 +1070,7 @@ bind_loopback(int sck, const char *port)
 
     // First IPv6
     g_memset(&sa, 0, sizeof(sa));
-    sa.sin6_family = AF_INET6;
+    sa.sin6_family = WS_AF_INET6;
     sa.sin6_addr = in6addr_loopback;             // IPv6 ::1
     sa.sin6_port = htons((tui16)atoi(port));
     if (bind(sck, (struct sockaddr*)&sa, sizeof(sa)) == 0)
@@ -1067,7 +1081,7 @@ bind_loopback(int sck, const char *port)
 
     // else IPv4
     g_memset(&s, 0, sizeof(s));
-    s.sin_family = AF_INET;
+    s.sin_family = WS_AF_INET;
     s.sin_addr.s_addr = htonl(INADDR_LOOPBACK);  // IPv4 127.0.0.1
     s.sin_port = htons((tui16)atoi(port));
     if (bind(sck, (struct sockaddr*)&s, sizeof(s)) == 0)
@@ -1078,8 +1092,8 @@ bind_loopback(int sck, const char *port)
 
     // else IPv6 with IPv4 address
     g_memset(&sa, 0, sizeof(sa));
-    sa.sin6_family = AF_INET6;
-    inet_pton(AF_INET6, "::FFFF:127.0.0.1", &sa.sin6_addr);
+    sa.sin6_family = WS_AF_INET6;
+    inet_pton(WS_AF_INET6, "::FFFF:127.0.0.1", &sa.sin6_addr);
     sa.sin6_port = htons((tui16)atoi(port));
     if (bind(sck, (struct sockaddr*)&sa, sizeof(sa)) == 0)
     {
@@ -1186,7 +1200,7 @@ g_tcp_bind_address(int sck, const char* port, const char* address)
     struct sockaddr_in s;
 
     memset(&s, 0, sizeof(struct sockaddr_in));
-    s.sin_family = AF_INET;
+    s.sin_family = WS_AF_INET;
     s.sin_port = htons((tui16)atoi(port));
     s.sin_addr.s_addr = INADDR_ANY;
     if (inet_aton(address, &s.sin_addr) < 0)
@@ -1229,7 +1243,7 @@ g_tcp_accept(int sck)
     {
         switch(sock_info.sock_addr.sa_family)
         {
-            case AF_INET:
+            case WS_AF_INET:
             {
                 struct sockaddr_in *sock_addr_in = &sock_info.sock_addr_in;
 
@@ -1243,7 +1257,7 @@ g_tcp_accept(int sck)
 
 #if defined(XRDP_ENABLE_IPV6)
 
-            case AF_INET6:
+            case WS_AF_INET6:
             {
                 struct sockaddr_in6 *sock_addr_in6 = &sock_info.sock_addr_in6;
                 char addr[256];
@@ -1278,7 +1292,7 @@ g_sck_accept(int sck, char *addr, int addr_bytes, char *port, int port_bytes)
 #if defined(XRDP_ENABLE_IPV6)
         struct sockaddr_in6 sock_addr_in6;
 #endif
-        struct sockaddr_un sock_addr_un;
+//        struct sockaddr_un sock_addr_un;
 #if defined(XRDP_ENABLE_VSOCK)
         struct sockaddr_vm sock_addr_vm;
 #endif
@@ -1293,21 +1307,21 @@ g_sck_accept(int sck, char *addr, int addr_bytes, char *port, int port_bytes)
     {
         switch(sock_info.sock_addr.sa_family)
         {
-            case AF_INET:
+            case WS_AF_INET:
             {
                 struct sockaddr_in *sock_addr_in = &sock_info.sock_addr_in;
 
                 g_snprintf(addr, addr_bytes, "%s", inet_ntoa(sock_addr_in->sin_addr));
                 g_snprintf(port, port_bytes, "%d", ntohs(sock_addr_in->sin_port));
                 g_snprintf(msg, sizeof(msg),
-                           "AF_INET connection received from %s port %s",
+                           "WS_AF_INET connection received from %s port %s",
                            addr, port);
                 break;
             }
 
 #if defined(XRDP_ENABLE_IPV6)
 
-            case AF_INET6:
+            case WS_AF_INET6:
             {
                 struct sockaddr_in6 *sock_addr_in6 = &sock_info.sock_addr_in6;
 
@@ -1315,7 +1329,7 @@ g_sck_accept(int sck, char *addr, int addr_bytes, char *port, int port_bytes)
                           &sock_addr_in6->sin6_addr, addr, addr_bytes);
                 g_snprintf(port, port_bytes, "%d", ntohs(sock_addr_in6->sin6_port));
                 g_snprintf(msg, sizeof(msg),
-                           "AF_INET6 connection received from %s port %s",
+                           "WS_AF_INET6 connection received from %s port %s",
                            addr, port);
                 break;
             }
@@ -1386,7 +1400,7 @@ g_write_ip_address(int rcv_sck, char *ip_address, int bytes)
 #if defined(XRDP_ENABLE_IPV6)
         struct sockaddr_in6 sock_addr_in6;
 #endif
-        struct sockaddr_un sock_addr_un;
+//        struct sockaddr_un sock_addr_un;
     } sock_info;
 
     ok = 0;
@@ -1402,7 +1416,7 @@ g_write_ip_address(int rcv_sck, char *ip_address, int bytes)
     {
         switch(sock_info.sock_addr.sa_family)
         {
-            case AF_INET:
+            case WS_AF_INET:
             {
                 struct sockaddr_in *sock_addr_in = &sock_info.sock_addr_in;
                 g_snprintf(addr, INET_ADDRSTRLEN, "%s", inet_ntoa(sock_addr_in->sin_addr));
@@ -1413,7 +1427,7 @@ g_write_ip_address(int rcv_sck, char *ip_address, int bytes)
 
 #if defined(XRDP_ENABLE_IPV6)
 
-            case AF_INET6:
+            case WS_AF_INET6:
             {
                 struct sockaddr_in6 *sock_addr_in6 = &sock_info.sock_addr_in6;
                 inet_ntop(sock_addr_in6->sin6_family,
@@ -1500,7 +1514,7 @@ g_sck_socket_ok(int sck)
 
     opt_len = sizeof(opt);
 
-    if (getsockopt(sck, SOL_SOCKET, SO_ERROR, (char *)(&opt), &opt_len) == 0)
+    if (getsockopt(sck, WS_SOL_SOCKET, WS_SO_ERROR, (char *)(&opt), &opt_len) == 0)
     {
         if (opt == 0)
         {
@@ -1676,7 +1690,7 @@ g_create_wait_obj(const char *name)
 #ifdef _WIN32
     tintptr obj;
 
-    obj = (tintptr)CreateEvent(0, 1, 0, name);
+    obj = (tintptr)CreateEventA(0, 1, 0, name);
     return obj;
 #else
     int fds[2];
@@ -1708,7 +1722,7 @@ g_create_wait_obj(const char *name)
 tintptr
 g_create_wait_obj_from_socket(tintptr socket, int write)
 {
-#ifdef _WIN32
+#ifdef _WIN321
     /* Create and return corresponding event handle for WaitForMultipleObjects */
     WSAEVENT event;
     long lnetevent = 0;
@@ -1736,7 +1750,7 @@ g_create_wait_obj_from_socket(tintptr socket, int write)
 void
 g_delete_wait_obj_from_socket(tintptr wait_obj)
 {
-#ifdef _WIN32
+#ifdef _WIN321
 
     if (wait_obj == 0)
     {
@@ -2359,11 +2373,11 @@ g_file_exist(const char *filename)
 int
 g_file_readable(const char *filename)
 {
-#if defined(_WIN32)
-    return _waccess(filename, 04) == 0;
-#else
+//#if defined(_WIN32)
+//    return _waccess(filename, 04) == 0;
+//#else
     return access(filename, R_OK) == 0;
-#endif
+//#endif
 }
 
 /*****************************************************************************/
@@ -2553,7 +2567,7 @@ g_strncpy(char *dest, const char *src, int len)
         return 0;
     }
 
-    rv = strncpy(dest, src, len);
+    rv = rdp_strncpy(dest, src, len);
     dest[len] = 0;
     return rv;
 }
@@ -2668,22 +2682,22 @@ g_strncmp_d(const char *s1, const char *s2, const char delim, int n)
 int
 g_strcasecmp(const char *c1, const char *c2)
 {
-#if defined(_WIN32)
-    return stricmp(c1, c2);
-#else
+//#if defined(_WIN32)
+//    return stricmp(c1, c2);
+//#else
     return strcasecmp(c1, c2);
-#endif
+//#endif
 }
 
 /*****************************************************************************/
 int
 g_strncasecmp(const char *c1, const char *c2, int len)
 {
-#if defined(_WIN32)
-    return strnicmp(c1, c2, len);
-#else
+//#if defined(_WIN32)
+//    return strnicmp(c1, c2, len);
+//#else
     return strncasecmp(c1, c2, len);
-#endif
+//#endif
 }
 
 /*****************************************************************************/
@@ -3556,6 +3570,7 @@ struct dib_hdr
     unsigned int   nimpcolors;
     };
 
+#if 0
 /******************************************************************************/
 int
 g_save_to_bmp(const char* filename, char* data, int stride_bytes,
@@ -3612,7 +3627,8 @@ g_save_to_bmp(const char* filename, char* data, int stride_bytes,
     dh.ncolors = 0;
     dh.nimpcolors = 0;
 
-    fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    //fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    fd = open(filename, _O_RDWR | _O_CREAT | _O_TRUNC, _S_IRUSR | _S_IWUSR);
     if (fd == -1)
     {
         g_writeln("g_save_to_bpp: open error");
@@ -3677,6 +3693,7 @@ g_save_to_bmp(const char* filename, char* data, int stride_bytes,
     close(fd);
     return 0;
 }
+#endif
 
 /*****************************************************************************/
 /* returns boolean */

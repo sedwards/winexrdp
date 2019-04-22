@@ -18,11 +18,46 @@
  * listen for incoming connection
  */
 
-#if defined(HAVE_CONFIG_H)
-#include <config_ac.h>
-#endif
+#define USE_WS_PREFIX
+
+#include "windows.h"
+#include "winsock2.h"
+#include "ws2tcpip.h"
+#include "iphlpapi.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <icmpapi.h>
+#include <limits.h>
+#include <unistd.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <dlfcn.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <time.h>
+#include <grp.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <locale.h>
 
 #include "xrdp.h"
+
 
 /* 'g_process' is protected by the semaphore 'g_process_sem'.  One thread sets
    g_process and waits for the other to process it */
@@ -64,11 +99,11 @@ xrdp_listen_create(void)
     }
 
     /* setting TCP mode now, may change later */
-    self->listen_trans = trans_create(TRANS_MODE_TCP, 16, 16);
+    self->listen_trans = rdp_trans_create(TRANS_MODE_TCP, 16, 16);
 
     if (self->listen_trans == 0)
     {
-        log_message(LOG_LEVEL_ERROR,"xrdp_listen_create: trans_create failed");
+        log_message(LOG_LEVEL_ERROR,"xrdp_listen_create: rdp_trans_create failed");
     }
     else
     {
@@ -84,7 +119,7 @@ xrdp_listen_delete(struct xrdp_listen *self)
 {
     if (self->listen_trans != 0)
     {
-        trans_delete(self->listen_trans);
+        rdp_trans_delete(self->listen_trans);
     }
 
     if (g_process_sem != 0)
@@ -163,19 +198,23 @@ xrdp_listen_get_port_address(char *port, int port_bytes,
     struct list *values;
     char cfg_file[256];
 
+        log_message(LOG_LEVEL_INFO, "xrdp_listen_test: "
+                                     "xrdp_listen_get_port_address");
+
     /* default to port 3389 */
     g_strncpy(port, "3389", port_bytes - 1);
     /* Default to all */
     g_strncpy(address, "0.0.0.0", address_bytes - 1);
     /* see if port or address is in xrdp.ini file */
-    g_snprintf(cfg_file, 255, "%s/xrdp.ini", XRDP_CFG_PATH);
-    fd = g_file_open(cfg_file);
+    //g_snprintf(cfg_file, 255, "%s/xrdp.ini", XRDP_CFG_PATH);
+    //fd = g_file_open(cfg_file);
     *mode = TRANS_MODE_TCP;
     *tcp_nodelay = 0 ;
     *tcp_keepalive = 0 ;
 
-    if (fd != -1)
-    {
+   #if 0 
+    //if (fd != -1)
+    //{
         names = list_create();
         names->auto_free = 1;
         values = list_create();
@@ -254,10 +293,11 @@ xrdp_listen_get_port_address(char *port, int port_bytes,
 
         list_delete(names);
         list_delete(values);
-    }
+    //}
+#endif
 
-    if (fd != -1)
-        g_file_close(fd);
+   // if (fd != -1)
+  //      g_file_close(fd);
 
     /* startup_param overrides */
     if (startup_param->port[0] != 0)
@@ -287,7 +327,7 @@ xrdp_listen_fork(struct xrdp_listen *self, struct trans *server_trans)
         g_close_wait_obj(self->pro_done_event);
         xrdp_listen_create_pro_done(self);
         /* delete listener, child need not listen */
-        trans_delete(self->listen_trans);
+        rdp_trans_delete(self->listen_trans);
         self->listen_trans = 0;
         /* new connect instance */
         process = xrdp_process_create(self, 0);
@@ -301,7 +341,7 @@ xrdp_listen_fork(struct xrdp_listen *self, struct trans *server_trans)
     }
 
     /* parent */
-    trans_delete(server_trans);
+    rdp_trans_delete(server_trans);
     return 0;
 }
 
@@ -340,7 +380,7 @@ xrdp_listen_conn_in(struct trans *self, struct trans *new_self)
 
 /*****************************************************************************/
 /* wait for incoming connections
-   passes through trans_listen_address return value */
+   passes through rdp_trans_listen_address return value */
 int
 xrdp_listen_main_loop(struct xrdp_listen *self)
 {
@@ -360,13 +400,14 @@ xrdp_listen_main_loop(struct xrdp_listen *self)
 
     self->status = 1;
 
+   log_message(LOG_LEVEL_INFO,"xrdp_listen_main_loop: started");
     if (xrdp_listen_get_port_address(port, sizeof(port),
                                      address, sizeof(address),
                                      &tcp_nodelay, &tcp_keepalive,
                                      &self->listen_trans->mode,
                                      self->startup_params) != 0)
     {
-        log_message(LOG_LEVEL_ERROR,"xrdp_listen_main_loop: xrdp_listen_get_port failed");
+        log_message(LOG_LEVEL_INFO,"xrdp_listen_main_loop: xrdp_listen_get_port failed");
         self->status = -1;
         return 1;
     }
@@ -377,15 +418,17 @@ xrdp_listen_main_loop(struct xrdp_listen *self)
         self->listen_trans->mode = TRANS_MODE_UNIX;
         /* not valid with UDS */
         tcp_nodelay = 0;
+        log_message(LOG_LEVEL_INFO,"xrdp_listen_main_loop: UDS nodelay");
     }
     else if (self->listen_trans->mode == TRANS_MODE_VSOCK)
     {
         /* not valid with VSOCK */
         tcp_nodelay = 0;
+        log_message(LOG_LEVEL_INFO,"xrdp_listen_main_loop: not valid with VSOCK");
     }
 
     /* Create socket */
-    error = trans_listen_address(self->listen_trans, port, address);
+    error = rdp_trans_listen_address(self->listen_trans, port, address);
     if (port[0] == '/')
     {
         g_chmod_hex(port, 0x0666);
@@ -459,7 +502,7 @@ xrdp_listen_main_loop(struct xrdp_listen *self)
             }
         }
 
-        self->listen_trans->trans_conn_in = xrdp_listen_conn_in;
+        self->listen_trans->rdp_trans_conn_in = xrdp_listen_conn_in;
         self->listen_trans->callback_data = self;
         term_obj = g_get_term_event(); /*Global termination event */
         sync_obj = g_get_sync_event();
@@ -475,7 +518,7 @@ xrdp_listen_main_loop(struct xrdp_listen *self)
             robjs[robjs_count++] = done_obj;
             timeout = -1;
 
-            if (trans_get_wait_objs(self->listen_trans, robjs,
+            if (rdp_trans_get_wait_objs(self->listen_trans, robjs,
                                     &robjs_count) != 0)
             {
                 break;
@@ -508,14 +551,14 @@ xrdp_listen_main_loop(struct xrdp_listen *self)
             }
 
             /* Run the callback when accept() returns a new socket*/
-            if (trans_check_wait_objs(self->listen_trans) != 0)
+            if (rdp_trans_check_wait_objs(self->listen_trans) != 0)
             {
                 break;
             }
         }
 
         /* stop listening */
-        trans_delete(self->listen_trans);
+        rdp_trans_delete(self->listen_trans);
         self->listen_trans = 0;
         /* second loop to wait for all process threads to close */
         cont = 1;
@@ -599,20 +642,20 @@ xrdp_listen_test(void)
                                      &mode,
                                      xrdp_listen->startup_params) != 0)
     {
-        log_message(LOG_LEVEL_DEBUG, "xrdp_listen_test: "
+        log_message(LOG_LEVEL_INFO, "xrdp_listen_test: "
                                      "xrdp_listen_get_port_address failed");
         rv = 1;
         goto done;
     }
 
     /* try to listen */
-    log_message(LOG_LEVEL_DEBUG, "Testing if xrdp can listen on %s port %s.",
+    log_message(LOG_LEVEL_INFO, "Testing if xrdp can listen on %s port %s.",
                                  address, port);
-    rv = trans_listen_address(xrdp_listen->listen_trans, port, address);
+    rv = rdp_trans_listen_address(xrdp_listen->listen_trans, port, address);
     if (rv == 0)
     {
         /* if listen succeeded, stop listen immediately */
-        trans_delete(xrdp_listen->listen_trans);
+        rdp_trans_delete(xrdp_listen->listen_trans);
         xrdp_listen->listen_trans = 0;
     }
 
